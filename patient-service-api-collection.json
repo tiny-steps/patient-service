@@ -1,0 +1,2403 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2024-08-04T00:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "req_group_patient_service",
+      "_type": "request_group",
+      "parentId": "wrk_patient_service",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "name": "Patient Service API",
+      "description": "Complete API collection for Patient Service - Tiny Steps Healthcare Platform",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1691097600000
+    },
+    {
+      "_id": "wrk_patient_service",
+      "_type": "workspace",
+      "parentId": null,
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "name": "Patient Service",
+      "description": "Patient Service API Collection for Tiny Steps Healthcare Platform"
+    },
+    {
+      "_id": "env_patient_service",
+      "_type": "environment",
+      "parentId": "wrk_patient_service",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:8085",
+        "auth_token": "Bearer YOUR_JWT_TOKEN_HERE",
+        "patient_id": "550e8400-e29b-41d4-a716-446655440000",
+        "user_id": "550e8400-e29b-41d4-a716-446655440001"
+      },
+      "dataPropertyOrder": {
+        "&": ["base_url", "auth_token", "patient_id", "user_id"]
+      },
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1691097600000
+    },
+    {
+      "_id": "fld_patient_controller",
+      "_type": "request_group",
+      "parentId": "req_group_patient_service",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "name": "1. Patient Management",
+      "description": "Core patient CRUD operations, search, and business logic",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1691097600000
+    },
+    {
+      "_id": "req_create_patient",
+      "_type": "request",
+      "parentId": "fld_patient_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patients",
+      "name": "Create Patient",
+      "description": "Register a new patient in the system",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"userId\": \"{{ _.user_id }}\",\n  \"dateOfBirth\": \"1990-05-15\",\n  \"gender\": \"MALE\",\n  \"bloodGroup\": \"O+\",\n  \"heightCm\": 175,\n  \"weightKg\": 70.5\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097600000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_get_patient_by_id",
+      "_type": "request",
+      "parentId": "fld_patient_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patients/{{ _.patient_id }}",
+      "name": "Get Patient by ID",
+      "description": "Retrieve complete patient information by ID",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097599000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_get_patient_by_user_id",
+      "_type": "request",
+      "parentId": "fld_patient_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patients/user/{{ _.user_id }}",
+      "name": "Get Patient by User ID",
+      "description": "Find patient record using their user account ID",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097598000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_get_all_patients",
+      "_type": "request",
+      "parentId": "fld_patient_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patients",
+      "name": "Get All Patients (Paginated)",
+      "description": "List all patients with pagination",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "page",
+          "value": "0",
+          "description": "Page number (0-based)"
+        },
+        {
+          "name": "size",
+          "value": "10",
+          "description": "Number of items per page"
+        },
+        {
+          "name": "sort",
+          "value": "createdAt,desc",
+          "description": "Sort criteria"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097597000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_update_patient",
+      "_type": "request",
+      "parentId": "fld_patient_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patients/{{ _.patient_id }}",
+      "name": "Update Patient",
+      "description": "Update complete patient information",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"userId\": \"{{ _.user_id }}\",\n  \"dateOfBirth\": \"1990-05-15\",\n  \"gender\": \"MALE\",\n  \"bloodGroup\": \"A+\",\n  \"heightCm\": 180,\n  \"weightKg\": 75.0\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097596000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_partial_update_patient",
+      "_type": "request",
+      "parentId": "fld_patient_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patients/{{ _.patient_id }}",
+      "name": "Partial Update Patient",
+      "description": "Update specific patient fields only",
+      "method": "PATCH",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"weightKg\": 72.0,\n  \"bloodGroup\": \"B+\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097595000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_delete_patient",
+      "_type": "request",
+      "parentId": "fld_patient_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patients/{{ _.patient_id }}",
+      "name": "Delete Patient",
+      "description": "Remove patient from system (Admin only)",
+      "method": "DELETE",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097594000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_search_by_gender",
+      "_type": "request",
+      "parentId": "fld_patient_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patients/search/gender",
+      "name": "Search by Gender",
+      "description": "Find patients by gender",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "gender",
+          "value": "FEMALE",
+          "description": "Gender: MALE, FEMALE, OTHER"
+        },
+        {
+          "name": "page",
+          "value": "0"
+        },
+        {
+          "name": "size",
+          "value": "10"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097593000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_search_by_blood_group",
+      "_type": "request",
+      "parentId": "fld_patient_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patients/search/blood-group",
+      "name": "Search by Blood Group",
+      "description": "Find patients by blood type",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "bloodGroup",
+          "value": "O+",
+          "description": "Blood group: O+, O-, A+, A-, B+, B-, AB+, AB-"
+        },
+        {
+          "name": "page",
+          "value": "0"
+        },
+        {
+          "name": "size",
+          "value": "10"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097592000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_search_by_age_range",
+      "_type": "request",
+      "parentId": "fld_patient_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patients/search/age-range",
+      "name": "Search by Age Range",
+      "description": "Find patients within specific age range",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "minAge",
+          "value": "18",
+          "description": "Minimum age"
+        },
+        {
+          "name": "maxAge",
+          "value": "65",
+          "description": "Maximum age"
+        },
+        {
+          "name": "page",
+          "value": "0"
+        },
+        {
+          "name": "size",
+          "value": "10"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097591000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_update_medical_info",
+      "_type": "request",
+      "parentId": "fld_patient_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patients/{{ _.patient_id }}/medical-info",
+      "name": "Update Medical Info",
+      "description": "Update height, weight, and blood group",
+      "method": "PATCH",
+      "body": {},
+      "parameters": [
+        {
+          "name": "heightCm",
+          "value": "180",
+          "description": "Height in centimeters"
+        },
+        {
+          "name": "weightKg",
+          "value": "75.0",
+          "description": "Weight in kilograms"
+        },
+        {
+          "name": "bloodGroup",
+          "value": "A+",
+          "description": "Blood group"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097590000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_update_personal_info",
+      "_type": "request",
+      "parentId": "fld_patient_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patients/{{ _.patient_id }}/personal-info",
+      "name": "Update Personal Info",
+      "description": "Update birth date and gender",
+      "method": "PATCH",
+      "body": {},
+      "parameters": [
+        {
+          "name": "dateOfBirth",
+          "value": "1990-05-15",
+          "description": "Date of birth (YYYY-MM-DD)"
+        },
+        {
+          "name": "gender",
+          "value": "MALE",
+          "description": "Gender: MALE, FEMALE, OTHER"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097589000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_calculate_age",
+      "_type": "request",
+      "parentId": "fld_patient_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patients/{{ _.patient_id }}/age",
+      "name": "Calculate Age",
+      "description": "Get current age of patient",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097588000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_calculate_bmi",
+      "_type": "request",
+      "parentId": "fld_patient_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patients/{{ _.patient_id }}/bmi",
+      "name": "Calculate BMI",
+      "description": "Calculate Body Mass Index",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097587000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_profile_completeness",
+      "_type": "request",
+      "parentId": "fld_patient_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patients/{{ _.patient_id }}/profile-completeness",
+      "name": "Check Profile Completeness",
+      "description": "Get percentage of completed profile fields",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097586000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_missing_fields",
+      "_type": "request",
+      "parentId": "fld_patient_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patients/{{ _.patient_id }}/missing-fields",
+      "name": "Get Missing Profile Fields",
+      "description": "List which profile fields are missing",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097585000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_patient_statistics",
+      "_type": "request",
+      "parentId": "fld_patient_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patients/statistics",
+      "name": "Get Patient Statistics",
+      "description": "Get comprehensive patient statistics (Admin only)",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097584000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "fld_medical_history_controller",
+      "_type": "request_group",
+      "parentId": "req_group_patient_service",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "name": "2. Medical History",
+      "description": "Patient medical history and conditions management",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1691097599000
+    },
+    {
+      "_id": "req_create_medical_history",
+      "_type": "request",
+      "parentId": "fld_medical_history_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-medical-history",
+      "name": "Create Medical History",
+      "description": "Record a new medical condition",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"patientId\": \"{{ _.patient_id }}\",\n  \"condition\": \"Type 2 Diabetes\",\n  \"notes\": \"Diagnosed after HbA1c test showed 7.2%. Patient advised on diet changes.\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097600000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_get_medical_history_by_id",
+      "_type": "request",
+      "parentId": "fld_medical_history_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-medical-history/{{ _.patient_id }}",
+      "name": "Get Medical History by ID",
+      "description": "Retrieve specific medical history record",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097599000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_get_medical_history_by_patient",
+      "_type": "request",
+      "parentId": "fld_medical_history_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-medical-history/patient/{{ _.patient_id }}",
+      "name": "Get Medical History by Patient",
+      "description": "Get all medical conditions for a patient",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097598000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_add_medical_history_simple",
+      "_type": "request",
+      "parentId": "fld_medical_history_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-medical-history/patient/{{ _.patient_id }}/add",
+      "name": "Add Medical History (Simple)",
+      "description": "Quick way to add medical condition",
+      "method": "POST",
+      "body": {},
+      "parameters": [
+        {
+          "name": "condition",
+          "value": "Hypertension",
+          "description": "Medical condition name"
+        },
+        {
+          "name": "notes",
+          "value": "Stage 1, controlled with medication",
+          "description": "Additional notes"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097597000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_get_recent_medical_history",
+      "_type": "request",
+      "parentId": "fld_medical_history_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-medical-history/patient/{{ _.patient_id }}/recent",
+      "name": "Get Recent Medical History",
+      "description": "Get medical history from last N days",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "daysBack",
+          "value": "90",
+          "description": "Number of days to look back"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097596000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_get_chronic_conditions",
+      "_type": "request",
+      "parentId": "fld_medical_history_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-medical-history/patient/{{ _.patient_id }}/chronic",
+      "name": "Get Chronic Conditions",
+      "description": "Get long-term medical conditions",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097595000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_medical_history_statistics",
+      "_type": "request",
+      "parentId": "fld_medical_history_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-medical-history/statistics",
+      "name": "Get Medical History Statistics",
+      "description": "Get statistics about medical conditions (Admin only)",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097594000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "fld_allergy_controller",
+      "_type": "request_group",
+      "parentId": "req_group_patient_service",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "name": "3. Allergy Management",
+      "description": "Patient allergies and reactions management",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1691097598000
+    },
+    {
+      "_id": "req_create_allergy",
+      "_type": "request",
+      "parentId": "fld_allergy_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-allergies",
+      "name": "Create Allergy",
+      "description": "Record a new allergy",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"patientId\": \"{{ _.patient_id }}\",\n  \"allergen\": \"Penicillin\",\n  \"reaction\": \"Severe skin rash and difficulty breathing\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097600000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_get_allergy_by_id",
+      "_type": "request",
+      "parentId": "fld_allergy_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-allergies/{{ _.patient_id }}",
+      "name": "Get Allergy by ID",
+      "description": "Retrieve specific allergy record",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097599000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_get_patient_allergies",
+      "_type": "request",
+      "parentId": "fld_allergy_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-allergies/patient/{{ _.patient_id }}",
+      "name": "Get Patient Allergies",
+      "description": "Get all allergies for a patient",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097598000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_add_allergy_simple",
+      "_type": "request",
+      "parentId": "fld_allergy_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-allergies/patient/{{ _.patient_id }}/add",
+      "name": "Add Allergy (Simple)",
+      "description": "Quick way to add allergy",
+      "method": "POST",
+      "body": {},
+      "parameters": [
+        {
+          "name": "allergen",
+          "value": "Shellfish",
+          "description": "Allergen name"
+        },
+        {
+          "name": "reaction",
+          "value": "Anaphylaxis",
+          "description": "Reaction description"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097597000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_get_critical_allergies",
+      "_type": "request",
+      "parentId": "fld_allergy_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-allergies/patient/{{ _.patient_id }}/critical",
+      "name": "Get Critical Allergies",
+      "description": "Get life-threatening allergies",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097596000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_check_has_allergy",
+      "_type": "request",
+      "parentId": "fld_allergy_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-allergies/patient/{{ _.patient_id }}/has-allergy",
+      "name": "Check Has Allergy",
+      "description": "Check if patient has specific allergy",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "allergen",
+          "value": "Penicillin",
+          "description": "Allergen to check"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097595000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_search_by_allergen",
+      "_type": "request",
+      "parentId": "fld_allergy_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-allergies/search/allergen",
+      "name": "Search by Allergen",
+      "description": "Find all patients allergic to specific substance",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "allergen",
+          "value": "Penicillin",
+          "description": "Allergen name"
+        },
+        {
+          "name": "page",
+          "value": "0"
+        },
+        {
+          "name": "size",
+          "value": "10"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097594000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_allergy_statistics",
+      "_type": "request",
+      "parentId": "fld_allergy_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-allergies/statistics",
+      "name": "Get Allergy Statistics",
+      "description": "Get allergy statistics (Admin only)",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097593000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "fld_medication_controller",
+      "_type": "request_group",
+      "parentId": "req_group_patient_service",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "name": "4. Medication Management",
+      "description": "Patient medications and prescriptions management",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1691097597000
+    },
+    {
+      "_id": "req_create_medication",
+      "_type": "request",
+      "parentId": "fld_medication_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-medications",
+      "name": "Create Medication",
+      "description": "Record a new medication",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"patientId\": \"{{ _.patient_id }}\",\n  \"medicationName\": \"Lisinopril\",\n  \"dosage\": \"10mg once daily\",\n  \"startDate\": \"2024-01-15\",\n  \"endDate\": null\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097600000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_get_medication_by_id",
+      "_type": "request",
+      "parentId": "fld_medication_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-medications/{{ _.patient_id }}",
+      "name": "Get Medication by ID",
+      "description": "Retrieve specific medication record",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097599000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_get_patient_medications",
+      "_type": "request",
+      "parentId": "fld_medication_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-medications/patient/{{ _.patient_id }}",
+      "name": "Get Patient Medications",
+      "description": "Get all medications for a patient",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097598000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_get_current_medications",
+      "_type": "request",
+      "parentId": "fld_medication_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-medications/patient/{{ _.patient_id }}/current",
+      "name": "Get Current Medications",
+      "description": "Get medications patient is currently taking",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097597000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_get_expiring_medications",
+      "_type": "request",
+      "parentId": "fld_medication_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-medications/patient/{{ _.patient_id }}/expiring",
+      "name": "Get Expiring Medications",
+      "description": "Find medications expiring soon",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "days",
+          "value": "30",
+          "description": "Days until expiration"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097596000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_add_medication_simple",
+      "_type": "request",
+      "parentId": "fld_medication_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-medications/patient/{{ _.patient_id }}/add",
+      "name": "Add Medication (Simple)",
+      "description": "Quick way to add medication",
+      "method": "POST",
+      "body": {},
+      "parameters": [
+        {
+          "name": "medicationName",
+          "value": "Metformin",
+          "description": "Medication name"
+        },
+        {
+          "name": "dosage",
+          "value": "500mg twice daily",
+          "description": "Dosage instructions"
+        },
+        {
+          "name": "startDate",
+          "value": "2024-01-15",
+          "description": "Start date (YYYY-MM-DD)"
+        },
+        {
+          "name": "endDate",
+          "value": "",
+          "description": "End date (optional)"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097595000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_start_medication",
+      "_type": "request",
+      "parentId": "fld_medication_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-medications/patient/{{ _.patient_id }}/start",
+      "name": "Start Medication",
+      "description": "Start a new medication",
+      "method": "POST",
+      "body": {},
+      "parameters": [
+        {
+          "name": "medicationName",
+          "value": "Aspirin",
+          "description": "Medication name"
+        },
+        {
+          "name": "dosage",
+          "value": "81mg daily",
+          "description": "Dosage instructions"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097594000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_stop_medication",
+      "_type": "request",
+      "parentId": "fld_medication_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-medications/patient/{{ _.patient_id }}/stop",
+      "name": "Stop Medication",
+      "description": "Stop a medication",
+      "method": "POST",
+      "body": {},
+      "parameters": [
+        {
+          "name": "medicationName",
+          "value": "Aspirin",
+          "description": "Medication name"
+        },
+        {
+          "name": "endDate",
+          "value": "2024-02-01",
+          "description": "End date (YYYY-MM-DD)"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097593000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_medication_statistics",
+      "_type": "request",
+      "parentId": "fld_medication_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-medications/statistics",
+      "name": "Get Medication Statistics",
+      "description": "Get medication usage statistics (Admin only)",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097592000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "fld_emergency_contact_controller",
+      "_type": "request_group",
+      "parentId": "req_group_patient_service",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "name": "5. Emergency Contacts",
+      "description": "Patient emergency contacts management",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1691097596000
+    },
+    {
+      "_id": "req_create_emergency_contact",
+      "_type": "request",
+      "parentId": "fld_emergency_contact_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-emergency-contacts",
+      "name": "Create Emergency Contact",
+      "description": "Add emergency contact for patient",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"patientId\": \"{{ _.patient_id }}\",\n  \"name\": \"Mary Doe\",\n  \"relationship\": \"Spouse\",\n  \"phone\": \"+1-555-123-4567\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097600000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_get_emergency_contacts",
+      "_type": "request",
+      "parentId": "fld_emergency_contact_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-emergency-contacts/patient/{{ _.patient_id }}",
+      "name": "Get Emergency Contacts",
+      "description": "Get all emergency contacts for patient",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097599000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_add_emergency_contact_simple",
+      "_type": "request",
+      "parentId": "fld_emergency_contact_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-emergency-contacts/patient/{{ _.patient_id }}/add",
+      "name": "Add Emergency Contact (Simple)",
+      "description": "Quick way to add emergency contact",
+      "method": "POST",
+      "body": {},
+      "parameters": [
+        {
+          "name": "name",
+          "value": "John Smith",
+          "description": "Contact name"
+        },
+        {
+          "name": "relationship",
+          "value": "Brother",
+          "description": "Relationship to patient"
+        },
+        {
+          "name": "phone",
+          "value": "555-987-6543",
+          "description": "Phone number"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097598000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_emergency_contact_statistics",
+      "_type": "request",
+      "parentId": "fld_emergency_contact_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-emergency-contacts/statistics",
+      "name": "Get Emergency Contact Statistics",
+      "description": "Get emergency contact statistics (Admin only)",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097597000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "fld_insurance_controller",
+      "_type": "request_group",
+      "parentId": "req_group_patient_service",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "name": "6. Insurance Management",
+      "description": "Patient insurance information management",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1691097595000
+    },
+    {
+      "_id": "req_create_insurance",
+      "_type": "request",
+      "parentId": "fld_insurance_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-insurance",
+      "name": "Create Insurance",
+      "description": "Add insurance information",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"patientId\": \"{{ _.patient_id }}\",\n  \"provider\": \"Blue Cross Blue Shield\",\n  \"policyNumber\": \"BC123456789\",\n  \"coverageDetails\": \"Full coverage with $20 copay for primary care\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097600000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_get_patient_insurance",
+      "_type": "request",
+      "parentId": "fld_insurance_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-insurance/patient/{{ _.patient_id }}",
+      "name": "Get Patient Insurance",
+      "description": "Get insurance information for patient",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097599000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_insurance_statistics",
+      "_type": "request",
+      "parentId": "fld_insurance_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-insurance/statistics",
+      "name": "Get Insurance Statistics",
+      "description": "Get insurance statistics (Admin only)",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097598000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "fld_advanced_search_controller",
+      "_type": "request_group",
+      "parentId": "req_group_patient_service",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "name": "7. Advanced Search",
+      "description": "Advanced patient search and filtering capabilities",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1691097594000
+    },
+    {
+      "_id": "req_search_by_medical_condition",
+      "_type": "request",
+      "parentId": "fld_advanced_search_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-advanced-search/by-medical-condition",
+      "name": "Search by Medical Condition",
+      "description": "Find patients with specific medical condition",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "condition",
+          "value": "Diabetes",
+          "description": "Medical condition name"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097600000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_search_by_medication",
+      "_type": "request",
+      "parentId": "fld_advanced_search_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-advanced-search/by-medication",
+      "name": "Search by Medication",
+      "description": "Find patients taking specific medication",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "medicationName",
+          "value": "Insulin",
+          "description": "Medication name"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097599000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_search_by_allergy",
+      "_type": "request",
+      "parentId": "fld_advanced_search_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-advanced-search/by-allergy",
+      "name": "Search by Allergy",
+      "description": "Find patients allergic to specific substance",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "allergen",
+          "value": "Penicillin",
+          "description": "Allergen name"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097598000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_search_by_age_range_advanced",
+      "_type": "request",
+      "parentId": "fld_advanced_search_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-advanced-search/by-age-range",
+      "name": "Search by Age Range (Advanced)",
+      "description": "Find patients within specific age range with pagination",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "minAge",
+          "value": "18",
+          "description": "Minimum age"
+        },
+        {
+          "name": "maxAge",
+          "value": "65",
+          "description": "Maximum age"
+        },
+        {
+          "name": "page",
+          "value": "0"
+        },
+        {
+          "name": "size",
+          "value": "10"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097597000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_search_critical_allergies",
+      "_type": "request",
+      "parentId": "fld_advanced_search_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-advanced-search/critical-allergies",
+      "name": "Find Patients with Critical Allergies",
+      "description": "Find all patients with life-threatening allergies",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097596000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_search_without_emergency_contacts",
+      "_type": "request",
+      "parentId": "fld_advanced_search_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-advanced-search/without-emergency-contacts",
+      "name": "Find Patients without Emergency Contacts",
+      "description": "Find patients missing emergency contacts",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097595000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_search_multiple_medications",
+      "_type": "request",
+      "parentId": "fld_advanced_search_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-advanced-search/multiple-medications",
+      "name": "Find Patients with Multiple Medications",
+      "description": "Find patients taking many medications",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "minimumMedications",
+          "value": "5",
+          "description": "Minimum number of medications"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097594000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_search_high_risk",
+      "_type": "request",
+      "parentId": "fld_advanced_search_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-advanced-search/high-risk",
+      "name": "Find High-Risk Patients",
+      "description": "Find patients with multiple risk factors",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097593000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_search_multi_criteria",
+      "_type": "request",
+      "parentId": "fld_advanced_search_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-advanced-search/multi-criteria",
+      "name": "Multi-Criteria Search",
+      "description": "Complex search with multiple filters",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "medicalCondition",
+          "value": "Diabetes",
+          "description": "Medical condition (optional)"
+        },
+        {
+          "name": "medication",
+          "value": "Insulin",
+          "description": "Medication (optional)"
+        },
+        {
+          "name": "allergen",
+          "value": "",
+          "description": "Allergen (optional)"
+        },
+        {
+          "name": "gender",
+          "value": "FEMALE",
+          "description": "Gender (optional)"
+        },
+        {
+          "name": "bloodGroup",
+          "value": "",
+          "description": "Blood group (optional)"
+        },
+        {
+          "name": "minAge",
+          "value": "40",
+          "description": "Minimum age (optional)"
+        },
+        {
+          "name": "maxAge",
+          "value": "70",
+          "description": "Maximum age (optional)"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097592000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "fld_health_summary_controller",
+      "_type": "request_group",
+      "parentId": "req_group_patient_service",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "name": "8. Health Summary",
+      "description": "Comprehensive patient health summaries and dashboards",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1691097593000
+    },
+    {
+      "_id": "req_get_health_summary",
+      "_type": "request",
+      "parentId": "fld_health_summary_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-health-summary/{{ _.patient_id }}",
+      "name": "Get Complete Health Summary",
+      "description": "Get comprehensive patient health overview",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097600000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_get_patient_dashboard",
+      "_type": "request",
+      "parentId": "fld_health_summary_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-health-summary/{{ _.patient_id }}/dashboard",
+      "name": "Get Patient Dashboard",
+      "description": "Get key health metrics for patient dashboard",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097599000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_get_safety_alerts",
+      "_type": "request",
+      "parentId": "fld_health_summary_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-health-summary/{{ _.patient_id }}/safety-alerts",
+      "name": "Get Safety Alerts",
+      "description": "Get critical safety information",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097598000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_get_care_plan",
+      "_type": "request",
+      "parentId": "fld_health_summary_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-health-summary/{{ _.patient_id }}/care-plan",
+      "name": "Get Care Plan",
+      "description": "Get comprehensive care plan",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097597000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_get_patient_timeline",
+      "_type": "request",
+      "parentId": "fld_health_summary_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-health-summary/{{ _.patient_id }}/timeline",
+      "name": "Get Patient Timeline",
+      "description": "Get patient health timeline",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "daysBack",
+          "value": "90",
+          "description": "Number of days to look back"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097596000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "fld_address_controller",
+      "_type": "request_group",
+      "parentId": "req_group_patient_service",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "name": "9. Address Management",
+      "description": "Patient address management and linking",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1691097592000
+    },
+    {
+      "_id": "req_create_patient_address",
+      "_type": "request",
+      "parentId": "fld_address_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-addresses",
+      "name": "Create Patient Address",
+      "description": "Link patient to an address",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"patientId\": \"{{ _.patient_id }}\",\n  \"addressId\": \"550e8400-e29b-41d4-a716-446655440002\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097600000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_get_patient_addresses",
+      "_type": "request",
+      "parentId": "fld_address_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-addresses/patient/{{ _.patient_id }}",
+      "name": "Get Patient Addresses",
+      "description": "Get all addresses for a patient",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097599000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_get_address_ids",
+      "_type": "request",
+      "parentId": "fld_address_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-addresses/patient/{{ _.patient_id }}/address-ids",
+      "name": "Get Address IDs",
+      "description": "Get list of address IDs for patient",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097598000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_search_addresses",
+      "_type": "request",
+      "parentId": "fld_address_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-addresses/search",
+      "name": "Search Addresses",
+      "description": "Search patient addresses with filters",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "patientId",
+          "value": "{{ _.patient_id }}",
+          "description": "Patient ID (optional)"
+        },
+        {
+          "name": "addressId",
+          "value": "",
+          "description": "Address ID (optional)"
+        },
+        {
+          "name": "page",
+          "value": "0"
+        },
+        {
+          "name": "size",
+          "value": "10"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097597000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_address_statistics",
+      "_type": "request",
+      "parentId": "fld_address_controller",
+      "modified": 1691097600000,
+      "created": 1691097600000,
+      "url": "{{ _.base_url }}/api/v1/patient-addresses/statistics",
+      "name": "Get Address Statistics",
+      "description": "Get address usage statistics (Admin only)",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "{{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1691097596000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    }
+  ]
+}
