@@ -9,7 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
 
@@ -40,8 +40,8 @@ public class Patient {
     private BigDecimal weightKg;
 
     @CreationTimestamp
-    private Timestamp createdAt;
+    private Instant createdAt;
 
     @UpdateTimestamp
-    private Timestamp updatedAt;
+    private Instant updatedAt;
 }

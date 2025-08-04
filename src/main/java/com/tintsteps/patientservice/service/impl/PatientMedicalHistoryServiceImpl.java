@@ -16,8 +16,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -35,26 +35,26 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
     @Transactional
     public PatientMedicalHistoryDto create(PatientMedicalHistoryDto patientMedicalHistoryDto) {
         log.info("Creating medical history for patient ID: {}", patientMedicalHistoryDto.getPatientId());
-        
+
         try {
             if (patientMedicalHistoryDto.getPatientId() == null) {
                 throw new IllegalArgumentException("Patient ID is required");
             }
-            
+
             // Verify patient exists
             Patient patient = patientRepository.findById(patientMedicalHistoryDto.getPatientId())
                     .orElseThrow(() -> new PatientNotFoundException(patientMedicalHistoryDto.getPatientId()));
-            
+
             PatientMedicalHistory history = patientMedicalHistoryMapper.patientMedicalHistoryDtoToPatientMedicalHistory(patientMedicalHistoryDto);
             history.setPatient(patient);
-            
-            // Set recorded timestamp if not provided
+
+            // Set recorded Instant if not provided
             if (history.getRecordedAt() == null) {
-                history.setRecordedAt(Timestamp.valueOf(LocalDateTime.now()));
+                history.setRecordedAt(Instant.now());
             }
-            
+
             PatientMedicalHistory savedHistory = patientMedicalHistoryRepository.save(history);
-            
+
             log.info("Medical history created successfully with ID: {}", savedHistory.getId());
             return patientMedicalHistoryMapper.patientMedicalHistoryToPatientMedicalHistoryDto(savedHistory);
         } catch (PatientNotFoundException e) {
@@ -69,10 +69,10 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
     @Transactional(readOnly = true)
     public PatientMedicalHistoryDto findById(UUID id) {
         log.info("Finding medical history by ID: {}", id);
-        
+
         PatientMedicalHistory history = patientMedicalHistoryRepository.findById(id)
                 .orElseThrow(() -> new PatientServiceException("Medical history not found with id: " + id));
-        
+
         return patientMedicalHistoryMapper.patientMedicalHistoryToPatientMedicalHistoryDto(history);
     }
 
@@ -80,7 +80,7 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
     @Transactional(readOnly = true)
     public List<PatientMedicalHistoryDto> findByPatientId(UUID patientId) {
         log.info("Finding medical history by patient ID: {}", patientId);
-        
+
         List<PatientMedicalHistory> histories = patientMedicalHistoryRepository.findByPatientId(patientId);
         return histories.stream()
                 .map(patientMedicalHistoryMapper::patientMedicalHistoryToPatientMedicalHistoryDto)
@@ -91,7 +91,7 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
     @Transactional(readOnly = true)
     public Page<PatientMedicalHistoryDto> findAll(Pageable pageable) {
         log.info("Finding all medical history with pagination");
-        
+
         Page<PatientMedicalHistory> histories = patientMedicalHistoryRepository.findAll(pageable);
         return histories.map(patientMedicalHistoryMapper::patientMedicalHistoryToPatientMedicalHistoryDto);
     }
@@ -100,11 +100,11 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
     @Transactional
     public PatientMedicalHistoryDto update(UUID id, PatientMedicalHistoryDto patientMedicalHistoryDto) {
         log.info("Updating medical history with ID: {}", id);
-        
+
         try {
             PatientMedicalHistory existingHistory = patientMedicalHistoryRepository.findById(id)
                     .orElseThrow(() -> new PatientServiceException("Medical history not found with id: " + id));
-            
+
             // Update fields
             if (patientMedicalHistoryDto.getCondition() != null) {
                 existingHistory.setCondition(patientMedicalHistoryDto.getCondition());
@@ -115,7 +115,7 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
             if (patientMedicalHistoryDto.getRecordedAt() != null) {
                 existingHistory.setRecordedAt(patientMedicalHistoryDto.getRecordedAt());
             }
-            
+
             PatientMedicalHistory updatedHistory = patientMedicalHistoryRepository.save(existingHistory);
             return patientMedicalHistoryMapper.patientMedicalHistoryToPatientMedicalHistoryDto(updatedHistory);
         } catch (Exception e) {
@@ -134,12 +134,12 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
     @Transactional
     public void delete(UUID id) {
         log.info("Deleting medical history with ID: {}", id);
-        
+
         try {
             if (!patientMedicalHistoryRepository.existsById(id)) {
                 throw new PatientServiceException("Medical history not found with id: " + id);
             }
-            
+
             patientMedicalHistoryRepository.deleteById(id);
             log.info("Medical history deleted successfully with ID: {}", id);
         } catch (Exception e) {
@@ -165,58 +165,18 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
         return histories.map(patientMedicalHistoryMapper::patientMedicalHistoryToPatientMedicalHistoryDto);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientMedicalHistoryDto> findByNotes(String notes) {
-        List<PatientMedicalHistory> histories = patientMedicalHistoryRepository.findByNotesContainingIgnoreCase(notes);
-        return histories.stream()
-                .map(patientMedicalHistoryMapper::patientMedicalHistoryToPatientMedicalHistoryDto)
-                .collect(Collectors.toList());
-    }
 
-    @Override
-    @Transactional(readOnly = true)
-    public Page<PatientMedicalHistoryDto> findByNotes(String notes, Pageable pageable) {
-        Page<PatientMedicalHistory> histories = patientMedicalHistoryRepository.findByNotesContainingIgnoreCase(notes, pageable);
-        return histories.map(patientMedicalHistoryMapper::patientMedicalHistoryToPatientMedicalHistoryDto);
-    }
-
-    @Override
     @Transactional(readOnly = true)
     public Page<PatientMedicalHistoryDto> findByPatientId(UUID patientId, Pageable pageable) {
         Page<PatientMedicalHistory> histories = patientMedicalHistoryRepository.findByPatientId(patientId, pageable);
         return histories.map(patientMedicalHistoryMapper::patientMedicalHistoryToPatientMedicalHistoryDto);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientMedicalHistoryDto> findByPatientAndCondition(UUID patientId, String condition) {
-        List<PatientMedicalHistory> histories = patientMedicalHistoryRepository.findByPatientIdAndConditionContainingIgnoreCase(patientId, condition);
-        return histories.stream()
-                .map(patientMedicalHistoryMapper::patientMedicalHistoryToPatientMedicalHistoryDto)
-                .collect(Collectors.toList());
-    }
 
     @Override
     @Transactional(readOnly = true)
-    public List<PatientMedicalHistoryDto> findByDateRange(Timestamp startDate, Timestamp endDate) {
-        List<PatientMedicalHistory> histories = patientMedicalHistoryRepository.findByRecordedAtBetween(startDate, endDate);
-        return histories.stream()
-                .map(patientMedicalHistoryMapper::patientMedicalHistoryToPatientMedicalHistoryDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<PatientMedicalHistoryDto> findByDateRange(Timestamp startDate, Timestamp endDate, Pageable pageable) {
-        Page<PatientMedicalHistory> histories = patientMedicalHistoryRepository.findByRecordedAtBetween(startDate, endDate, pageable);
-        return histories.map(patientMedicalHistoryMapper::patientMedicalHistoryToPatientMedicalHistoryDto);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<PatientMedicalHistoryDto> searchMedicalHistory(UUID patientId, String condition, String notes, 
-                                                              Timestamp startDate, Timestamp endDate, Pageable pageable) {
+    public Page<PatientMedicalHistoryDto> searchMedicalHistory(UUID patientId, String condition, String notes,
+                                                              Instant startDate, Instant endDate, Pageable pageable) {
         // For now, implement basic search - can be enhanced with Specifications
         Page<PatientMedicalHistory> histories = patientMedicalHistoryRepository.findAll(pageable);
         return histories.map(patientMedicalHistoryMapper::patientMedicalHistoryToPatientMedicalHistoryDto);
@@ -227,17 +187,17 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
     @Transactional
     public PatientMedicalHistoryDto addMedicalHistory(UUID patientId, String condition, String notes) {
         log.info("Adding medical history for patient ID: {}", patientId);
-        
+
         try {
             Patient patient = patientRepository.findById(patientId)
                     .orElseThrow(() -> new PatientNotFoundException(patientId));
-            
+
             PatientMedicalHistory history = new PatientMedicalHistory();
             history.setPatient(patient);
             history.setCondition(condition);
             history.setNotes(notes);
-            history.setRecordedAt(Timestamp.valueOf(LocalDateTime.now()));
-            
+            history.setRecordedAt(Instant.now());
+
             PatientMedicalHistory savedHistory = patientMedicalHistoryRepository.save(history);
             return patientMedicalHistoryMapper.patientMedicalHistoryToPatientMedicalHistoryDto(savedHistory);
         } catch (PatientNotFoundException e) {
@@ -252,21 +212,15 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
     @Transactional
     public void removeMedicalHistory(UUID patientId, String condition) {
         log.info("Removing medical history for patient ID: {} with condition: {}", patientId, condition);
-        
+
         List<PatientMedicalHistory> histories = patientMedicalHistoryRepository.findByPatientId(patientId);
         List<PatientMedicalHistory> historiesToDelete = histories.stream()
                 .filter(history -> history.getCondition().equalsIgnoreCase(condition))
                 .collect(Collectors.toList());
-        
+
         if (!historiesToDelete.isEmpty()) {
             patientMedicalHistoryRepository.deleteAll(historiesToDelete);
         }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientMedicalHistoryDto> getMedicalHistoryForPatient(UUID patientId) {
-        return findByPatientId(patientId);
     }
 
     @Override
@@ -285,35 +239,25 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
     }
 
     // Validation Operations
-    @Override
     @Transactional(readOnly = true)
     public boolean existsById(UUID id) {
         return patientMedicalHistoryRepository.existsById(id);
     }
 
-    @Override
     @Transactional(readOnly = true)
     public boolean existsByPatientId(UUID patientId) {
         return patientMedicalHistoryRepository.existsByPatientId(patientId);
     }
 
-    @Override
     @Transactional(readOnly = true)
     public boolean existsByPatientIdAndCondition(UUID patientId, String condition) {
         return patientMedicalHistoryRepository.existsByPatientIdAndCondition(patientId, condition);
     }
 
     // Statistics Operations
-    @Override
     @Transactional(readOnly = true)
     public long countByPatientId(UUID patientId) {
         return patientMedicalHistoryRepository.countByPatientId(patientId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public long countByCondition(String condition) {
-        return patientMedicalHistoryRepository.countByConditionContainingIgnoreCase(condition);
     }
 
     @Override
@@ -360,7 +304,7 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
                         PatientMedicalHistory history = patientMedicalHistoryMapper.patientMedicalHistoryDtoToPatientMedicalHistory(dto);
                         history.setPatient(patient);
                         if (history.getRecordedAt() == null) {
-                            history.setRecordedAt(Timestamp.valueOf(LocalDateTime.now()));
+                            history.setRecordedAt(Instant.now());
                         }
                         return history;
                     })
@@ -383,7 +327,6 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
         patientMedicalHistoryRepository.deleteByPatientId(patientId);
     }
 
-    @Override
     @Transactional
     public void deleteBatch(List<UUID> ids) {
         log.info("Deleting batch of {} medical histories", ids.size());
@@ -395,12 +338,6 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
     @Transactional(readOnly = true)
     public int getMedicalHistoryCount(UUID patientId) {
         return (int) countByPatientId(patientId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean hasMultipleMedicalHistoryRecords(UUID patientId) {
-        return countByPatientId(patientId) > 1;
     }
 
     @Override
@@ -422,7 +359,7 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
     @Override
     @Transactional(readOnly = true)
     public List<PatientMedicalHistoryDto> getRecentMedicalHistory(UUID patientId, int daysBack) {
-        Timestamp sinceDate = Timestamp.valueOf(LocalDateTime.now().minusDays(daysBack));
+        Instant sinceDate = Instant.now().minus(Duration.ofDays(daysBack));
         List<PatientMedicalHistory> recentHistories = patientMedicalHistoryRepository.findRecentMedicalHistory(sinceDate);
 
         return recentHistories.stream()
@@ -436,11 +373,5 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
     public List<String> getChronicConditions(UUID patientId) {
         // For now, return all conditions - could be enhanced with chronic condition logic
         return getMedicalConditions(patientId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean hasChronicCondition(UUID patientId, String condition) {
-        return hasMedicalHistory(patientId, condition);
     }
 }

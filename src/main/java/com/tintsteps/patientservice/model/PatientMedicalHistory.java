@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -32,5 +32,5 @@ public class PatientMedicalHistory {
     private String notes;
 
     @CreationTimestamp
-    private Timestamp recordedAt;
+    private Instant recordedAt;
 }

@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,8 +31,8 @@ public interface PatientMedicalHistoryRepository extends JpaRepository<PatientMe
     List<PatientMedicalHistory> findByPatientIdAndConditionContainingIgnoreCase(UUID patientId, String condition);
 
     // Find by recorded date range
-    List<PatientMedicalHistory> findByRecordedAtBetween(Timestamp startDate, Timestamp endDate);
-    Page<PatientMedicalHistory> findByRecordedAtBetween(Timestamp startDate, Timestamp endDate, Pageable pageable);
+    List<PatientMedicalHistory> findByRecordedAtBetween(Instant startDate, Instant endDate);
+    Page<PatientMedicalHistory> findByRecordedAtBetween(Instant startDate, Instant endDate, Pageable pageable);
 
     // Validation methods
     boolean existsByPatientId(UUID patientId);
@@ -62,5 +62,5 @@ public interface PatientMedicalHistoryRepository extends JpaRepository<PatientMe
 
     // Find recent medical history
     @Query("SELECT pmh FROM PatientMedicalHistory pmh WHERE pmh.recordedAt >= :sinceDate ORDER BY pmh.recordedAt DESC")
-    List<PatientMedicalHistory> findRecentMedicalHistory(@Param("sinceDate") Timestamp sinceDate);
+    List<PatientMedicalHistory> findRecentMedicalHistory(@Param("sinceDate") Instant sinceDate);
 }

@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,8 +30,8 @@ public interface PatientAllergyRepository extends JpaRepository<PatientAllergy, 
     List<PatientAllergy> findByPatientIdAndAllergenContainingIgnoreCase(UUID patientId, String allergen);
 
     // Find by recorded date range
-    List<PatientAllergy> findByRecordedAtBetween(Timestamp startDate, Timestamp endDate);
-    Page<PatientAllergy> findByRecordedAtBetween(Timestamp startDate, Timestamp endDate, Pageable pageable);
+    List<PatientAllergy> findByRecordedAtBetween(Instant startDate, Instant endDate);
+    Page<PatientAllergy> findByRecordedAtBetween(Instant startDate, Instant endDate, Pageable pageable);
 
     // Validation methods
     boolean existsByPatientId(UUID patientId);

@@ -24,6 +24,7 @@ public interface PatientMedicationService {
 
     // Search Operations - Only keep used methods
     List<PatientMedicationDto> findByMedicationName(String medicationName);
+    Page<PatientMedicationDto> findByMedicationName(String medicationName, Pageable pageable);
     Page<PatientMedicationDto> searchMedications(UUID patientId, String medicationName, String dosage,
                                                 Date startDate, Date endDate, Pageable pageable);
 
@@ -52,4 +53,10 @@ public interface PatientMedicationService {
     boolean hasMedicationConflicts(UUID patientId, String newMedication);
     List<String> getPotentialInteractions(UUID patientId, String medicationName);
     List<PatientMedicationDto> getExpiringMedications(UUID patientId, int daysAhead);
+
+    Page<PatientMedicationDto> findByDosage(String dosage, Pageable pageable);
+
+    PatientMedicationDto renewMedication(UUID medicationId, Date newEndDate);
+
+    PatientMedicationDto changeDosage(UUID medicationId, String newDosage);
 }

@@ -38,19 +38,19 @@ public class PatientServiceImpl implements PatientService {
     @Transactional
     public PatientDto create(PatientDto patientDto) {
         log.info("Creating patient for user ID: {}", patientDto.getUserId());
-        
+
         try {
             if (patientDto.getUserId() == null) {
                 throw new IllegalArgumentException("User ID is required");
             }
-            
+
             if (existsByUserId(patientDto.getUserId())) {
                 throw new PatientServiceException("Patient already exists for user ID: " + patientDto.getUserId());
             }
-            
+
             Patient patient = patientMapper.patientDtoToPatient(patientDto);
             Patient savedPatient = patientRepository.save(patient);
-            
+
             log.info("Patient created successfully with ID: {}", savedPatient.getId());
             return patientMapper.patientToPatientDto(savedPatient);
         } catch (Exception e) {
@@ -63,10 +63,10 @@ public class PatientServiceImpl implements PatientService {
     @Transactional(readOnly = true)
     public PatientDto findById(UUID id) {
         log.info("Finding patient by ID: {}", id);
-        
+
         Patient patient = patientRepository.findById(id)
                 .orElseThrow(() -> new PatientNotFoundException(id));
-        
+
         return patientMapper.patientToPatientDto(patient);
     }
 
@@ -74,10 +74,10 @@ public class PatientServiceImpl implements PatientService {
     @Transactional(readOnly = true)
     public PatientDto findByUserId(UUID userId) {
         log.info("Finding patient by user ID: {}", userId);
-        
+
         Patient patient = patientRepository.findByUserId(userId)
                 .orElseThrow(() -> new PatientNotFoundException("userId", userId));
-        
+
         return patientMapper.patientToPatientDto(patient);
     }
 
@@ -85,7 +85,7 @@ public class PatientServiceImpl implements PatientService {
     @Transactional(readOnly = true)
     public Page<PatientDto> findAll(Pageable pageable) {
         log.info("Finding all patients with pagination: {}", pageable);
-        
+
         Page<Patient> patients = patientRepository.findAll(pageable);
         return patients.map(patientMapper::patientToPatientDto);
     }
@@ -94,11 +94,11 @@ public class PatientServiceImpl implements PatientService {
     @Transactional
     public PatientDto update(UUID id, PatientDto patientDto) {
         log.info("Updating patient with ID: {}", id);
-        
+
         try {
             Patient existingPatient = patientRepository.findById(id)
                     .orElseThrow(() -> new PatientNotFoundException(id));
-            
+
             // Update fields
             if (patientDto.getDateOfBirth() != null) {
                 existingPatient.setDateOfBirth(patientDto.getDateOfBirth());
@@ -115,9 +115,9 @@ public class PatientServiceImpl implements PatientService {
             if (patientDto.getWeightKg() != null) {
                 existingPatient.setWeightKg(patientDto.getWeightKg());
             }
-            
+
             Patient updatedPatient = patientRepository.save(existingPatient);
-            
+
             log.info("Patient updated successfully with ID: {}", updatedPatient.getId());
             return patientMapper.patientToPatientDto(updatedPatient);
         } catch (PatientNotFoundException e) {
@@ -138,12 +138,12 @@ public class PatientServiceImpl implements PatientService {
     @Transactional
     public void delete(UUID id) {
         log.info("Deleting patient with ID: {}", id);
-        
+
         try {
             if (!existsById(id)) {
                 throw new PatientNotFoundException(id);
             }
-            
+
             patientRepository.deleteById(id);
             log.info("Patient deleted successfully with ID: {}", id);
         } catch (PatientNotFoundException e) {
@@ -156,134 +156,28 @@ public class PatientServiceImpl implements PatientService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PatientDto> findByGender(Gender gender) {
-        log.info("Finding patients by gender: {}", gender);
-        
-        List<Patient> patients = patientRepository.findByGender(gender);
-        return patients.stream()
-                .map(patientMapper::patientToPatientDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Page<PatientDto> findByGender(Gender gender, Pageable pageable) {
         log.info("Finding patients by gender: {} with pagination", gender);
-        
+
         Page<Patient> patients = patientRepository.findByGender(gender, pageable);
         return patients.map(patientMapper::patientToPatientDto);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<PatientDto> findByBloodGroup(String bloodGroup) {
-        log.info("Finding patients by blood group: {}", bloodGroup);
-        
-        List<Patient> patients = patientRepository.findByBloodGroup(bloodGroup);
-        return patients.stream()
-                .map(patientMapper::patientToPatientDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Page<PatientDto> findByBloodGroup(String bloodGroup, Pageable pageable) {
         log.info("Finding patients by blood group: {} with pagination", bloodGroup);
-        
+
         Page<Patient> patients = patientRepository.findByBloodGroup(bloodGroup, pageable);
         return patients.map(patientMapper::patientToPatientDto);
     }
 
+
     @Override
-    @Transactional(readOnly = true)
-    public List<PatientDto> findByAgeBetween(Integer minAge, Integer maxAge) {
-        log.info("Finding patients by age range: {} - {}", minAge, maxAge);
-        
-        List<Patient> patients = patientRepository.findByAgeBetween(minAge, maxAge);
-        return patients.stream()
+    public List<PatientDto> findAll() {
+        return patientRepository.findAll().stream()
                 .map(patientMapper::patientToPatientDto)
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<PatientDto> findByAgeBetween(Integer minAge, Integer maxAge, Pageable pageable) {
-        log.info("Finding patients by age range: {} - {} with pagination", minAge, maxAge);
-        
-        Page<Patient> patients = patientRepository.findByAgeBetween(minAge, maxAge, pageable);
-        return patients.map(patientMapper::patientToPatientDto);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientDto> findByHeightRange(Integer minHeight, Integer maxHeight) {
-        log.info("Finding patients by height range: {} - {}", minHeight, maxHeight);
-        
-        List<Patient> patients = patientRepository.findByHeightCmBetween(minHeight, maxHeight);
-        return patients.stream()
-                .map(patientMapper::patientToPatientDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<PatientDto> findByHeightRange(Integer minHeight, Integer maxHeight, Pageable pageable) {
-        log.info("Finding patients by height range: {} - {} with pagination", minHeight, maxHeight);
-        
-        Page<Patient> patients = patientRepository.findByHeightCmBetween(minHeight, maxHeight, pageable);
-        return patients.map(patientMapper::patientToPatientDto);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientDto> findByWeightRange(BigDecimal minWeight, BigDecimal maxWeight) {
-        log.info("Finding patients by weight range: {} - {}", minWeight, maxWeight);
-        
-        List<Patient> patients = patientRepository.findByWeightKgBetween(minWeight, maxWeight);
-        return patients.stream()
-                .map(patientMapper::patientToPatientDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<PatientDto> findByWeightRange(BigDecimal minWeight, BigDecimal maxWeight, Pageable pageable) {
-        log.info("Finding patients by weight range: {} - {} with pagination", minWeight, maxWeight);
-        
-        Page<Patient> patients = patientRepository.findByWeightKgBetween(minWeight, maxWeight, pageable);
-        return patients.map(patientMapper::patientToPatientDto);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientDto> findByDateOfBirthRange(Date startDate, Date endDate) {
-        log.info("Finding patients by date of birth range: {} - {}", startDate, endDate);
-        
-        List<Patient> patients = patientRepository.findByDateOfBirthBetween(startDate, endDate);
-        return patients.stream()
-                .map(patientMapper::patientToPatientDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<PatientDto> findByDateOfBirthRange(Date startDate, Date endDate, Pageable pageable) {
-        log.info("Finding patients by date of birth range: {} - {} with pagination", startDate, endDate);
-
-        Page<Patient> patients = patientRepository.findByDateOfBirthBetween(startDate, endDate, pageable);
-        return patients.map(patientMapper::patientToPatientDto);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<PatientDto> searchPatients(Gender gender, String bloodGroup, Integer minAge, Integer maxAge,
-                                          Integer minHeight, Integer maxHeight, BigDecimal minWeight,
-                                          BigDecimal maxWeight, Pageable pageable) {
-        log.info("Searching patients with multiple criteria");
-
-        // For now, implement basic search - can be enhanced with Specifications
-        Page<Patient> patients = patientRepository.findAll(pageable);
-        return patients.map(patientMapper::patientToPatientDto);
     }
 
     @Override
@@ -379,22 +273,14 @@ public class PatientServiceImpl implements PatientService {
         return patient.getWeightKg().divide(heightSquared, 2, RoundingMode.HALF_UP);
     }
 
-    @Override
     @Transactional(readOnly = true)
     public boolean existsById(UUID id) {
         return patientRepository.existsById(id);
     }
 
-    @Override
     @Transactional(readOnly = true)
     public boolean existsByUserId(UUID userId) {
         return patientRepository.existsByUserId(userId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean isPatientProfileComplete(UUID id) {
-        return calculateProfileCompleteness(id) >= 80; // 80% threshold
     }
 
     @Override
@@ -420,23 +306,6 @@ public class PatientServiceImpl implements PatientService {
         return patientRepository.count();
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public long countByGender(Gender gender) {
-        return patientRepository.countByGender(gender);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public long countByBloodGroup(String bloodGroup) {
-        return patientRepository.countByBloodGroup(bloodGroup);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public long countByAgeRange(Integer minAge, Integer maxAge) {
-        return patientRepository.countByAgeBetween(minAge, maxAge);
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -526,8 +395,8 @@ public class PatientServiceImpl implements PatientService {
         return (completedFields * 100) / totalFields;
     }
 
-    @Override
     @Transactional(readOnly = true)
+    @Override
     public boolean hasCompleteBasicInfo(UUID id) {
         Patient patient = patientRepository.findById(id)
                 .orElseThrow(() -> new PatientNotFoundException(id));
@@ -535,8 +404,8 @@ public class PatientServiceImpl implements PatientService {
         return patient.getDateOfBirth() != null && patient.getGender() != null;
     }
 
-    @Override
     @Transactional(readOnly = true)
+    @Override
     public boolean hasMedicalInfo(UUID id) {
         Patient patient = patientRepository.findById(id)
                 .orElseThrow(() -> new PatientNotFoundException(id));
@@ -551,19 +420,7 @@ public class PatientServiceImpl implements PatientService {
         return patients.map(patientMapper::patientToPatientDto);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public Page<PatientDto> findByGender(Gender gender, Pageable pageable) {
-        Page<Patient> patients = patientRepository.findByGender(gender, pageable);
-        return patients.map(patientMapper::patientToPatientDto);
-    }
 
-    @Override
-    @Transactional(readOnly = true)
-    public Page<PatientDto> findByBloodGroup(String bloodGroup, Pageable pageable) {
-        Page<Patient> patients = patientRepository.findByBloodGroup(bloodGroup, pageable);
-        return patients.map(patientMapper::patientToPatientDto);
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -583,76 +440,11 @@ public class PatientServiceImpl implements PatientService {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientDto> findByBloodGroup(String bloodGroup) {
-        List<Patient> patients = patientRepository.findByBloodGroup(bloodGroup);
-        return patients.stream()
-                .map(patientMapper::patientToPatientDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientDto> findByAgeBetween(Integer minAge, Integer maxAge) {
-        List<Patient> patients = patientRepository.findByAgeBetween(minAge, maxAge);
-        return patients.stream()
-                .map(patientMapper::patientToPatientDto)
-                .collect(Collectors.toList());
-    }
 
     @Override
     @Transactional(readOnly = true)
     public Page<PatientDto> findByAgeBetween(Integer minAge, Integer maxAge, Pageable pageable) {
         Page<Patient> patients = patientRepository.findByAgeBetween(minAge, maxAge, pageable);
-        return patients.map(patientMapper::patientToPatientDto);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientDto> findByHeightRange(Integer minHeight, Integer maxHeight) {
-        List<Patient> patients = patientRepository.findByHeightRange(minHeight, maxHeight);
-        return patients.stream()
-                .map(patientMapper::patientToPatientDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<PatientDto> findByHeightRange(Integer minHeight, Integer maxHeight, Pageable pageable) {
-        Page<Patient> patients = patientRepository.findByHeightRange(minHeight, maxHeight, pageable);
-        return patients.map(patientMapper::patientToPatientDto);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientDto> findByWeightRange(BigDecimal minWeight, BigDecimal maxWeight) {
-        List<Patient> patients = patientRepository.findByWeightRange(minWeight, maxWeight);
-        return patients.stream()
-                .map(patientMapper::patientToPatientDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<PatientDto> findByWeightRange(BigDecimal minWeight, BigDecimal maxWeight, Pageable pageable) {
-        Page<Patient> patients = patientRepository.findByWeightRange(minWeight, maxWeight, pageable);
-        return patients.map(patientMapper::patientToPatientDto);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientDto> findByDateOfBirthRange(Date startDate, Date endDate) {
-        List<Patient> patients = patientRepository.findByDateOfBirthRange(startDate, endDate);
-        return patients.stream()
-                .map(patientMapper::patientToPatientDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<PatientDto> findByDateOfBirthRange(Date startDate, Date endDate, Pageable pageable) {
-        Page<Patient> patients = patientRepository.findByDateOfBirthRange(startDate, endDate, pageable);
         return patients.map(patientMapper::patientToPatientDto);
     }
 }

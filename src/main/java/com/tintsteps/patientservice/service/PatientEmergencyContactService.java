@@ -19,10 +19,8 @@ public interface PatientEmergencyContactService {
     void delete(UUID id);
 
     // Search Operations
-    List<PatientEmergencyContactDto> findByRelationship(String relationship);
     Page<PatientEmergencyContactDto> findByRelationship(String relationship, Pageable pageable);
     Page<PatientEmergencyContactDto> findByPatientId(UUID patientId, Pageable pageable);
-    List<PatientEmergencyContactDto> findByPatientAndRelationship(UUID patientId, String relationship);
 
     // Advanced Search
     Page<PatientEmergencyContactDto> searchContacts(UUID patientId, String name, String relationship,

@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-@Repository
 public interface PatientRepository extends JpaRepository<Patient, UUID> {
 
     // Find by user ID
@@ -81,19 +80,6 @@ public interface PatientRepository extends JpaRepository<Patient, UUID> {
     // Additional search methods
     @Query("SELECT p FROM Patient p WHERE (YEAR(CURRENT_DATE) - YEAR(p.dateOfBirth)) BETWEEN :minAge AND :maxAge")
     Page<Patient> findByAgeRange(@Param("minAge") Integer minAge, @Param("maxAge") Integer maxAge, Pageable pageable);
-
-    List<Patient> findByGender(Gender gender);
-    Page<Patient> findByGender(Gender gender, Pageable pageable);
-
-    List<Patient> findByBloodGroup(String bloodGroup);
-    Page<Patient> findByBloodGroup(String bloodGroup, Pageable pageable);
-
-    @Query("SELECT p FROM Patient p WHERE (YEAR(CURRENT_DATE) - YEAR(p.dateOfBirth)) BETWEEN :minAge AND :maxAge")
-    List<Patient> findByAgeBetween(@Param("minAge") Integer minAge, @Param("maxAge") Integer maxAge);
-
-    @Query("SELECT p FROM Patient p WHERE (YEAR(CURRENT_DATE) - YEAR(p.dateOfBirth)) BETWEEN :minAge AND :maxAge")
-    Page<Patient> findByAgeBetween(@Param("minAge") Integer minAge, @Param("maxAge") Integer maxAge, Pageable pageable);
-
     @Query("SELECT p FROM Patient p WHERE p.heightCm BETWEEN :minHeight AND :maxHeight")
     List<Patient> findByHeightRange(@Param("minHeight") Integer minHeight, @Param("maxHeight") Integer maxHeight);
 

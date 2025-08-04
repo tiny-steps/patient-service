@@ -23,7 +23,7 @@ public class ResponseModel<T> {
     private String path;
     
     @Builder.Default
-    private LocalDateTime timestamp = LocalDateTime.now();
+    private LocalDateTime Instant = LocalDateTime.now();
     
     // Success response with data
     public static <T> ResponseModel<T> success(T data, String message) {

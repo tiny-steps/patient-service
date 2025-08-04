@@ -33,30 +33,30 @@ public class PatientAddressServiceImpl implements PatientAddressService {
     @Transactional
     public PatientAddressDto create(PatientAddressDto patientAddressDto) {
         log.info("Creating patient address for patient ID: {}", patientAddressDto.getPatientId());
-        
+
         try {
             if (patientAddressDto.getPatientId() == null) {
                 throw new IllegalArgumentException("Patient ID is required");
             }
-            
+
             if (patientAddressDto.getAddressId() == null) {
                 throw new IllegalArgumentException("Address ID is required");
             }
-            
+
             // Verify patient exists
             Patient patient = patientRepository.findById(patientAddressDto.getPatientId())
                     .orElseThrow(() -> new PatientNotFoundException(patientAddressDto.getPatientId()));
-            
+
             // Check if link already exists
             if (existsByPatientIdAndAddressId(patientAddressDto.getPatientId(), patientAddressDto.getAddressId())) {
                 throw new PatientServiceException("Patient is already linked to this address");
             }
-            
+
             PatientAddress patientAddress = patientAddressMapper.patientAddressDtoToPatientAddress(patientAddressDto);
             patientAddress.setPatient(patient);
-            
+
             PatientAddress savedAddress = patientAddressRepository.save(patientAddress);
-            
+
             log.info("Patient address created successfully with ID: {}", savedAddress.getId());
             return patientAddressMapper.patientAddressToPatientAddressDto(savedAddress);
         } catch (PatientNotFoundException e) {
@@ -71,10 +71,10 @@ public class PatientAddressServiceImpl implements PatientAddressService {
     @Transactional(readOnly = true)
     public PatientAddressDto findById(UUID id) {
         log.info("Finding patient address by ID: {}", id);
-        
+
         PatientAddress patientAddress = patientAddressRepository.findById(id)
                 .orElseThrow(() -> new PatientServiceException("Patient address not found with id: " + id));
-        
+
         return patientAddressMapper.patientAddressToPatientAddressDto(patientAddress);
     }
 
@@ -82,7 +82,7 @@ public class PatientAddressServiceImpl implements PatientAddressService {
     @Transactional(readOnly = true)
     public List<PatientAddressDto> findByPatientId(UUID patientId) {
         log.info("Finding patient addresses by patient ID: {}", patientId);
-        
+
         List<PatientAddress> addresses = patientAddressRepository.findByPatientId(patientId);
         return addresses.stream()
                 .map(patientAddressMapper::patientAddressToPatientAddressDto)
@@ -93,7 +93,7 @@ public class PatientAddressServiceImpl implements PatientAddressService {
     @Transactional(readOnly = true)
     public Page<PatientAddressDto> findAll(Pageable pageable) {
         log.info("Finding all patient addresses with pagination");
-        
+
         Page<PatientAddress> addresses = patientAddressRepository.findAll(pageable);
         return addresses.map(patientAddressMapper::patientAddressToPatientAddressDto);
     }
@@ -102,16 +102,16 @@ public class PatientAddressServiceImpl implements PatientAddressService {
     @Transactional
     public PatientAddressDto update(UUID id, PatientAddressDto patientAddressDto) {
         log.info("Updating patient address with ID: {}", id);
-        
+
         try {
             PatientAddress existingAddress = patientAddressRepository.findById(id)
                     .orElseThrow(() -> new PatientServiceException("Patient address not found with id: " + id));
-            
+
             // Update address ID if provided
             if (patientAddressDto.getAddressId() != null) {
                 existingAddress.setAddressId(patientAddressDto.getAddressId());
             }
-            
+
             PatientAddress updatedAddress = patientAddressRepository.save(existingAddress);
             return patientAddressMapper.patientAddressToPatientAddressDto(updatedAddress);
         } catch (Exception e) {
@@ -130,12 +130,12 @@ public class PatientAddressServiceImpl implements PatientAddressService {
     @Transactional
     public void delete(UUID id) {
         log.info("Deleting patient address with ID: {}", id);
-        
+
         try {
             if (!patientAddressRepository.existsById(id)) {
                 throw new PatientServiceException("Patient address not found with id: " + id);
             }
-            
+
             patientAddressRepository.deleteById(id);
             log.info("Patient address deleted successfully with ID: {}", id);
         } catch (Exception e) {
@@ -149,47 +149,28 @@ public class PatientAddressServiceImpl implements PatientAddressService {
     @Transactional(readOnly = true)
     public List<PatientAddressDto> findByAddressId(UUID addressId) {
         log.info("Finding patient addresses by address ID: {}", addressId);
-        
+
         List<PatientAddress> addresses = patientAddressRepository.findByAddressId(addressId);
         return addresses.stream()
                 .map(patientAddressMapper::patientAddressToPatientAddressDto)
                 .collect(Collectors.toList());
     }
 
-    @Override
     @Transactional(readOnly = true)
-    public Page<PatientAddressDto> findByAddressId(UUID addressId, Pageable pageable) {
-        log.info("Finding patient addresses by address ID: {} with pagination", addressId);
-        
-        Page<PatientAddress> addresses = patientAddressRepository.findByAddressId(addressId, pageable);
-        return addresses.map(patientAddressMapper::patientAddressToPatientAddressDto);
-    }
-
     @Override
-    @Transactional(readOnly = true)
     public Page<PatientAddressDto> findByPatientId(UUID patientId, Pageable pageable) {
         log.info("Finding patient addresses by patient ID: {} with pagination", patientId);
-        
+
         Page<PatientAddress> addresses = patientAddressRepository.findByPatientId(patientId, pageable);
         return addresses.map(patientAddressMapper::patientAddressToPatientAddressDto);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientAddressDto> findByPatientAndAddress(UUID patientId, UUID addressId) {
-        log.info("Finding patient addresses by patient ID: {} and address ID: {}", patientId, addressId);
-        
-        List<PatientAddress> addresses = patientAddressRepository.findByPatientIdAndAddressId(patientId, addressId);
-        return addresses.stream()
-                .map(patientAddressMapper::patientAddressToPatientAddressDto)
-                .collect(Collectors.toList());
-    }
 
     @Override
     @Transactional(readOnly = true)
     public Page<PatientAddressDto> searchAddresses(UUID patientId, UUID addressId, Pageable pageable) {
         log.info("Searching patient addresses with multiple criteria");
-        
+
         // For now, implement basic search - can be enhanced with Specifications
         Page<PatientAddress> addresses = patientAddressRepository.findAll(pageable);
         return addresses.map(patientAddressMapper::patientAddressToPatientAddressDto);
@@ -200,19 +181,19 @@ public class PatientAddressServiceImpl implements PatientAddressService {
     @Transactional
     public PatientAddressDto linkPatientToAddress(UUID patientId, UUID addressId) {
         log.info("Linking patient ID: {} to address ID: {}", patientId, addressId);
-        
+
         try {
             Patient patient = patientRepository.findById(patientId)
                     .orElseThrow(() -> new PatientNotFoundException(patientId));
-            
+
             if (existsByPatientIdAndAddressId(patientId, addressId)) {
                 throw new PatientServiceException("Patient is already linked to this address");
             }
-            
+
             PatientAddress patientAddress = new PatientAddress();
             patientAddress.setPatient(patient);
             patientAddress.setAddressId(addressId);
-            
+
             PatientAddress savedAddress = patientAddressRepository.save(patientAddress);
             return patientAddressMapper.patientAddressToPatientAddressDto(savedAddress);
         } catch (PatientNotFoundException e) {
@@ -227,7 +208,7 @@ public class PatientAddressServiceImpl implements PatientAddressService {
     @Transactional
     public void unlinkPatientFromAddress(UUID patientId, UUID addressId) {
         log.info("Unlinking patient ID: {} from address ID: {}", patientId, addressId);
-        
+
         try {
             patientAddressRepository.deleteByPatientIdAndAddressId(patientId, addressId);
         } catch (Exception e) {
@@ -238,59 +219,42 @@ public class PatientAddressServiceImpl implements PatientAddressService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PatientAddressDto> getAddressesForPatient(UUID patientId) {
-        return findByPatientId(patientId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientAddressDto> getPatientsForAddress(UUID addressId) {
-        return findByAddressId(addressId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public boolean isPatientLinkedToAddress(UUID patientId, UUID addressId) {
         return patientAddressRepository.existsByPatientIdAndAddressId(patientId, addressId);
     }
 
     // Validation Operations
-    @Override
     @Transactional(readOnly = true)
+    @Override
     public boolean existsById(UUID id) {
         return patientAddressRepository.existsById(id);
     }
 
-    @Override
     @Transactional(readOnly = true)
+    @Override
     public boolean existsByPatientId(UUID patientId) {
         return patientAddressRepository.existsByPatientId(patientId);
     }
 
-    @Override
     @Transactional(readOnly = true)
+    @Override
     public boolean existsByAddressId(UUID addressId) {
         return patientAddressRepository.existsByAddressId(addressId);
     }
 
-    @Override
     @Transactional(readOnly = true)
+    @Override
     public boolean existsByPatientIdAndAddressId(UUID patientId, UUID addressId) {
         return patientAddressRepository.existsByPatientIdAndAddressId(patientId, addressId);
     }
 
     // Statistics Operations
-    @Override
     @Transactional(readOnly = true)
+    @Override
     public long countByPatientId(UUID patientId) {
         return patientAddressRepository.countByPatientId(patientId);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public long countByAddressId(UUID addressId) {
-        return patientAddressRepository.countByAddressId(addressId);
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -369,8 +333,8 @@ public class PatientAddressServiceImpl implements PatientAddressService {
         patientAddressRepository.deleteByAddressId(addressId);
     }
 
-    @Override
     @Transactional
+    @Override
     public void deleteBatch(List<UUID> ids) {
         log.info("Deleting batch of {} patient addresses", ids.size());
         patientAddressRepository.deleteAllById(ids);
@@ -385,12 +349,6 @@ public class PatientAddressServiceImpl implements PatientAddressService {
 
     @Override
     @Transactional(readOnly = true)
-    public boolean hasMultipleAddresses(UUID patientId) {
-        return countByPatientId(patientId) > 1;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public List<UUID> getAddressIds(UUID patientId) {
         List<PatientAddress> addresses = patientAddressRepository.findByPatientId(patientId);
         return addresses.stream()
@@ -398,9 +356,4 @@ public class PatientAddressServiceImpl implements PatientAddressService {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public boolean hasAddress(UUID patientId) {
-        return existsByPatientId(patientId);
-    }
 }

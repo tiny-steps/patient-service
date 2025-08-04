@@ -4,6 +4,7 @@ import com.tintsteps.patientservice.dto.PatientDto;
 import com.tintsteps.patientservice.model.Gender;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -20,6 +21,9 @@ public interface PatientService {
     PatientDto update(UUID id, PatientDto patientDto);
     PatientDto partialUpdate(UUID id, PatientDto patientDto);
     void delete(UUID id);
+
+    @Transactional(readOnly = true)
+    List<PatientDto> findByGender(Gender gender);
 
     // Search Operations - Only keep used methods
     Page<PatientDto> findByGender(Gender gender, Pageable pageable);
@@ -52,4 +56,12 @@ public interface PatientService {
 
     // Additional Operations - Only keep used methods
     boolean hasEmergencyContacts(UUID patientId);
+
+    @Transactional(readOnly = true)
+    boolean hasCompleteBasicInfo(UUID id);
+
+    @Transactional(readOnly = true)
+    boolean hasMedicalInfo(UUID id);
+
+    Page<PatientDto> findByAgeRange(Integer minAge, Integer maxAge, Pageable pageable);
 }

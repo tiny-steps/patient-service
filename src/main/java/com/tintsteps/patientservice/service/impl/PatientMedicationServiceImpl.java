@@ -36,21 +36,21 @@ public class PatientMedicationServiceImpl implements PatientMedicationService {
     @Transactional
     public PatientMedicationDto create(PatientMedicationDto patientMedicationDto) {
         log.info("Creating patient medication for patient ID: {}", patientMedicationDto.getPatientId());
-        
+
         try {
             if (patientMedicationDto.getPatientId() == null) {
                 throw new IllegalArgumentException("Patient ID is required");
             }
-            
+
             // Verify patient exists
             Patient patient = patientRepository.findById(patientMedicationDto.getPatientId())
                     .orElseThrow(() -> new PatientNotFoundException(patientMedicationDto.getPatientId()));
-            
+
             PatientMedication patientMedication = patientMedicationMapper.patientMedicationDtoToPatientMedication(patientMedicationDto);
             patientMedication.setPatient(patient);
-            
+
             PatientMedication savedMedication = patientMedicationRepository.save(patientMedication);
-            
+
             log.info("Patient medication created successfully with ID: {}", savedMedication.getId());
             return patientMedicationMapper.patientMedicationToPatientMedicationDto(savedMedication);
         } catch (PatientNotFoundException e) {
@@ -65,10 +65,10 @@ public class PatientMedicationServiceImpl implements PatientMedicationService {
     @Transactional(readOnly = true)
     public PatientMedicationDto findById(UUID id) {
         log.info("Finding patient medication by ID: {}", id);
-        
+
         PatientMedication patientMedication = patientMedicationRepository.findById(id)
                 .orElseThrow(() -> new PatientServiceException("Patient medication not found with id: " + id));
-        
+
         return patientMedicationMapper.patientMedicationToPatientMedicationDto(patientMedication);
     }
 
@@ -76,7 +76,7 @@ public class PatientMedicationServiceImpl implements PatientMedicationService {
     @Transactional(readOnly = true)
     public List<PatientMedicationDto> findByPatientId(UUID patientId) {
         log.info("Finding patient medications by patient ID: {}", patientId);
-        
+
         List<PatientMedication> medications = patientMedicationRepository.findByPatientId(patientId);
         return medications.stream()
                 .map(patientMedicationMapper::patientMedicationToPatientMedicationDto)
@@ -87,7 +87,7 @@ public class PatientMedicationServiceImpl implements PatientMedicationService {
     @Transactional(readOnly = true)
     public Page<PatientMedicationDto> findAll(Pageable pageable) {
         log.info("Finding all patient medications with pagination");
-        
+
         Page<PatientMedication> medications = patientMedicationRepository.findAll(pageable);
         return medications.map(patientMedicationMapper::patientMedicationToPatientMedicationDto);
     }
@@ -96,11 +96,11 @@ public class PatientMedicationServiceImpl implements PatientMedicationService {
     @Transactional
     public PatientMedicationDto update(UUID id, PatientMedicationDto patientMedicationDto) {
         log.info("Updating patient medication with ID: {}", id);
-        
+
         try {
             PatientMedication existingMedication = patientMedicationRepository.findById(id)
                     .orElseThrow(() -> new PatientServiceException("Patient medication not found with id: " + id));
-            
+
             // Update fields
             if (patientMedicationDto.getMedicationName() != null) {
                 existingMedication.setMedicationName(patientMedicationDto.getMedicationName());
@@ -114,7 +114,7 @@ public class PatientMedicationServiceImpl implements PatientMedicationService {
             if (patientMedicationDto.getEndDate() != null) {
                 existingMedication.setEndDate(patientMedicationDto.getEndDate());
             }
-            
+
             PatientMedication updatedMedication = patientMedicationRepository.save(existingMedication);
             return patientMedicationMapper.patientMedicationToPatientMedicationDto(updatedMedication);
         } catch (Exception e) {
@@ -133,12 +133,12 @@ public class PatientMedicationServiceImpl implements PatientMedicationService {
     @Transactional
     public void delete(UUID id) {
         log.info("Deleting patient medication with ID: {}", id);
-        
+
         try {
             if (!patientMedicationRepository.existsById(id)) {
                 throw new PatientServiceException("Patient medication not found with id: " + id);
             }
-            
+
             patientMedicationRepository.deleteById(id);
             log.info("Patient medication deleted successfully with ID: {}", id);
         } catch (Exception e) {
@@ -151,7 +151,7 @@ public class PatientMedicationServiceImpl implements PatientMedicationService {
     @Transactional(readOnly = true)
     public List<PatientMedicationDto> findByMedicationName(String medicationName) {
         log.info("Finding patient medications by medication name: {}", medicationName);
-        
+
         List<PatientMedication> medications = patientMedicationRepository.findByMedicationNameContainingIgnoreCase(medicationName);
         return medications.stream()
                 .map(patientMedicationMapper::patientMedicationToPatientMedicationDto)
@@ -162,59 +162,18 @@ public class PatientMedicationServiceImpl implements PatientMedicationService {
     @Transactional(readOnly = true)
     public Page<PatientMedicationDto> findByMedicationName(String medicationName, Pageable pageable) {
         log.info("Finding patient medications by medication name: {} with pagination", medicationName);
-        
+
         Page<PatientMedication> medications = patientMedicationRepository.findByMedicationNameContainingIgnoreCase(medicationName, pageable);
         return medications.map(patientMedicationMapper::patientMedicationToPatientMedicationDto);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientMedicationDto> findByDosage(String dosage) {
-        log.info("Finding patient medications by dosage: {}", dosage);
-        
-        List<PatientMedication> medications = patientMedicationRepository.findByDosageContainingIgnoreCase(dosage);
-        return medications.stream()
-                .map(patientMedicationMapper::patientMedicationToPatientMedicationDto)
-                .collect(Collectors.toList());
-    }
 
     @Override
     @Transactional(readOnly = true)
     public Page<PatientMedicationDto> findByDosage(String dosage, Pageable pageable) {
         log.info("Finding patient medications by dosage: {} with pagination", dosage);
-        
+
         Page<PatientMedication> medications = patientMedicationRepository.findByDosageContainingIgnoreCase(dosage, pageable);
-        return medications.map(patientMedicationMapper::patientMedicationToPatientMedicationDto);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientMedicationDto> findByPatientAndMedication(UUID patientId, String medicationName) {
-        log.info("Finding patient medications by patient ID: {} and medication: {}", patientId, medicationName);
-        
-        List<PatientMedication> medications = patientMedicationRepository.findByPatientIdAndMedicationNameContainingIgnoreCase(patientId, medicationName);
-        return medications.stream()
-                .map(patientMedicationMapper::patientMedicationToPatientMedicationDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientMedicationDto> findByDateRange(Date startDate, Date endDate) {
-        log.info("Finding patient medications by date range: {} to {}", startDate, endDate);
-        
-        List<PatientMedication> medications = patientMedicationRepository.findByStartDateBetween(startDate, endDate);
-        return medications.stream()
-                .map(patientMedicationMapper::patientMedicationToPatientMedicationDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<PatientMedicationDto> findByDateRange(Date startDate, Date endDate, Pageable pageable) {
-        log.info("Finding patient medications by date range: {} to {} with pagination", startDate, endDate);
-        
-        Page<PatientMedication> medications = patientMedicationRepository.findByStartDateBetween(startDate, endDate, pageable);
         return medications.map(patientMedicationMapper::patientMedicationToPatientMedicationDto);
     }
 
@@ -222,7 +181,7 @@ public class PatientMedicationServiceImpl implements PatientMedicationService {
     @Transactional(readOnly = true)
     public Page<PatientMedicationDto> findByPatientId(UUID patientId, Pageable pageable) {
         log.info("Finding patient medications by patient ID: {} with pagination", patientId);
-        
+
         Page<PatientMedication> medications = patientMedicationRepository.findByPatientId(patientId, pageable);
         return medications.map(patientMedicationMapper::patientMedicationToPatientMedicationDto);
     }
@@ -324,38 +283,21 @@ public class PatientMedicationServiceImpl implements PatientMedicationService {
     }
 
     // Validation Operations
-    @Override
     @Transactional(readOnly = true)
     public boolean existsById(UUID id) {
         return patientMedicationRepository.existsById(id);
     }
 
-    @Override
     @Transactional(readOnly = true)
     public boolean existsByPatientId(UUID patientId) {
         return patientMedicationRepository.existsByPatientId(patientId);
     }
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean existsByPatientIdAndMedicationName(UUID patientId, String medicationName) {
-        return patientMedicationRepository.existsByPatientIdAndMedicationName(patientId, medicationName);
-    }
-
     // Statistics Operations
-    @Override
     @Transactional(readOnly = true)
     public long countByPatientId(UUID patientId) {
         return patientMedicationRepository.countByPatientId(patientId);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public long countByMedicationName(String medicationName) {
-        return patientMedicationRepository.countByMedicationNameContainingIgnoreCase(medicationName);
-    }
-
-    @Override
     @Transactional(readOnly = true)
     public long countCurrentMedications(UUID patientId) {
         return patientMedicationRepository.countCurrentMedicationsByPatientId(patientId);
@@ -419,7 +361,6 @@ public class PatientMedicationServiceImpl implements PatientMedicationService {
         patientMedicationRepository.deleteByPatientId(patientId);
     }
 
-    @Override
     @Transactional
     public void deleteBatch(List<UUID> ids) {
         log.info("Deleting batch of {} medications", ids.size());
@@ -437,13 +378,6 @@ public class PatientMedicationServiceImpl implements PatientMedicationService {
                 .map(PatientMedication::getMedicationName)
                 .collect(Collectors.toList());
     }
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean hasActiveMedications(UUID patientId) {
-        return countCurrentMedications(patientId) > 0;
-    }
-
     @Override
     @Transactional(readOnly = true)
     public int getActiveMedicationCount(UUID patientId) {

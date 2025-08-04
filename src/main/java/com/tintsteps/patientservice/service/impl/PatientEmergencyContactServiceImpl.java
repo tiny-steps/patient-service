@@ -33,21 +33,21 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
     @Transactional
     public PatientEmergencyContactDto create(PatientEmergencyContactDto patientEmergencyContactDto) {
         log.info("Creating emergency contact for patient ID: {}", patientEmergencyContactDto.getPatientId());
-        
+
         try {
             if (patientEmergencyContactDto.getPatientId() == null) {
                 throw new IllegalArgumentException("Patient ID is required");
             }
-            
+
             // Verify patient exists
             Patient patient = patientRepository.findById(patientEmergencyContactDto.getPatientId())
                     .orElseThrow(() -> new PatientNotFoundException(patientEmergencyContactDto.getPatientId()));
-            
+
             PatientEmergencyContact contact = patientEmergencyContactMapper.patientEmergencyContactDtoToPatientEmergencyContact(patientEmergencyContactDto);
             contact.setPatient(patient);
-            
+
             PatientEmergencyContact savedContact = patientEmergencyContactRepository.save(contact);
-            
+
             log.info("Emergency contact created successfully with ID: {}", savedContact.getId());
             return patientEmergencyContactMapper.patientEmergencyContactToPatientEmergencyContactDto(savedContact);
         } catch (PatientNotFoundException e) {
@@ -62,10 +62,10 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
     @Transactional(readOnly = true)
     public PatientEmergencyContactDto findById(UUID id) {
         log.info("Finding emergency contact by ID: {}", id);
-        
+
         PatientEmergencyContact contact = patientEmergencyContactRepository.findById(id)
                 .orElseThrow(() -> new PatientServiceException("Emergency contact not found with id: " + id));
-        
+
         return patientEmergencyContactMapper.patientEmergencyContactToPatientEmergencyContactDto(contact);
     }
 
@@ -73,7 +73,7 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
     @Transactional(readOnly = true)
     public List<PatientEmergencyContactDto> findByPatientId(UUID patientId) {
         log.info("Finding emergency contacts by patient ID: {}", patientId);
-        
+
         List<PatientEmergencyContact> contacts = patientEmergencyContactRepository.findByPatientId(patientId);
         return contacts.stream()
                 .map(patientEmergencyContactMapper::patientEmergencyContactToPatientEmergencyContactDto)
@@ -84,7 +84,7 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
     @Transactional(readOnly = true)
     public Page<PatientEmergencyContactDto> findAll(Pageable pageable) {
         log.info("Finding all emergency contacts with pagination");
-        
+
         Page<PatientEmergencyContact> contacts = patientEmergencyContactRepository.findAll(pageable);
         return contacts.map(patientEmergencyContactMapper::patientEmergencyContactToPatientEmergencyContactDto);
     }
@@ -93,11 +93,11 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
     @Transactional
     public PatientEmergencyContactDto update(UUID id, PatientEmergencyContactDto patientEmergencyContactDto) {
         log.info("Updating emergency contact with ID: {}", id);
-        
+
         try {
             PatientEmergencyContact existingContact = patientEmergencyContactRepository.findById(id)
                     .orElseThrow(() -> new PatientServiceException("Emergency contact not found with id: " + id));
-            
+
             // Update fields
             if (patientEmergencyContactDto.getName() != null) {
                 existingContact.setName(patientEmergencyContactDto.getName());
@@ -108,7 +108,7 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
             if (patientEmergencyContactDto.getPhone() != null) {
                 existingContact.setPhone(patientEmergencyContactDto.getPhone());
             }
-            
+
             PatientEmergencyContact updatedContact = patientEmergencyContactRepository.save(existingContact);
             return patientEmergencyContactMapper.patientEmergencyContactToPatientEmergencyContactDto(updatedContact);
         } catch (Exception e) {
@@ -127,12 +127,12 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
     @Transactional
     public void delete(UUID id) {
         log.info("Deleting emergency contact with ID: {}", id);
-        
+
         try {
             if (!patientEmergencyContactRepository.existsById(id)) {
                 throw new PatientServiceException("Emergency contact not found with id: " + id);
             }
-            
+
             patientEmergencyContactRepository.deleteById(id);
             log.info("Emergency contact deleted successfully with ID: {}", id);
         } catch (Exception e) {
@@ -142,15 +142,6 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
     }
 
     // Search Operations
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientEmergencyContactDto> findByRelationship(String relationship) {
-        List<PatientEmergencyContact> contacts = patientEmergencyContactRepository.findByRelationshipContainingIgnoreCase(relationship);
-        return contacts.stream()
-                .map(patientEmergencyContactMapper::patientEmergencyContactToPatientEmergencyContactDto)
-                .collect(Collectors.toList());
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -168,14 +159,6 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
         return contacts.map(patientEmergencyContactMapper::patientEmergencyContactToPatientEmergencyContactDto);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientEmergencyContactDto> findByPatientAndRelationship(UUID patientId, String relationship) {
-        List<PatientEmergencyContact> contacts = patientEmergencyContactRepository.findByPatientIdAndRelationshipContainingIgnoreCase(patientId, relationship);
-        return contacts.stream()
-                .map(patientEmergencyContactMapper::patientEmergencyContactToPatientEmergencyContactDto)
-                .collect(Collectors.toList());
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -190,17 +173,17 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
     @Transactional
     public PatientEmergencyContactDto addEmergencyContact(UUID patientId, String name, String relationship, String phone) {
         log.info("Adding emergency contact for patient ID: {}", patientId);
-        
+
         try {
             Patient patient = patientRepository.findById(patientId)
                     .orElseThrow(() -> new PatientNotFoundException(patientId));
-            
+
             PatientEmergencyContact contact = new PatientEmergencyContact();
             contact.setPatient(patient);
             contact.setName(name);
             contact.setRelationship(relationship);
             contact.setPhone(phone);
-            
+
             PatientEmergencyContact savedContact = patientEmergencyContactRepository.save(contact);
             return patientEmergencyContactMapper.patientEmergencyContactToPatientEmergencyContactDto(savedContact);
         } catch (PatientNotFoundException e) {
@@ -224,12 +207,6 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
         if (!contactsToDelete.isEmpty()) {
             patientEmergencyContactRepository.deleteAll(contactsToDelete);
         }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientEmergencyContactDto> getEmergencyContactsForPatient(UUID patientId) {
-        return findByPatientId(patientId);
     }
 
     @Override
@@ -261,17 +238,6 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
         return patientEmergencyContactRepository.existsByPatientId(patientId);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public boolean existsByPhone(String phone) {
-        return patientEmergencyContactRepository.existsByPhone(phone);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean existsByPatientIdAndPhone(UUID patientId, String phone) {
-        return patientEmergencyContactRepository.existsByPatientIdAndPhone(patientId, phone);
-    }
 
     // Statistics Operations
     @Override
@@ -280,11 +246,6 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
         return patientEmergencyContactRepository.countByPatientId(patientId);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public long countByRelationship(String relationship) {
-        return patientEmergencyContactRepository.countByRelationshipContainingIgnoreCase(relationship);
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -321,7 +282,7 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
     @Transactional
     public List<PatientEmergencyContactDto> createBatch(List<PatientEmergencyContactDto> patientEmergencyContactDtos) {
         log.info("Creating batch of {} emergency contacts", patientEmergencyContactDtos.size());
-        
+
         try {
             List<PatientEmergencyContact> contacts = patientEmergencyContactDtos.stream()
                     .map(dto -> {
@@ -332,7 +293,7 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
                         return contact;
                     })
                     .collect(Collectors.toList());
-            
+
             List<PatientEmergencyContact> savedContacts = patientEmergencyContactRepository.saveAll(contacts);
             return savedContacts.stream()
                     .map(patientEmergencyContactMapper::patientEmergencyContactToPatientEmergencyContactDto)
@@ -350,24 +311,12 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
         patientEmergencyContactRepository.deleteByPatientId(patientId);
     }
 
-    @Override
-    @Transactional
-    public void deleteBatch(List<UUID> ids) {
-        log.info("Deleting batch of {} emergency contacts", ids.size());
-        patientEmergencyContactRepository.deleteAllById(ids);
-    }
 
     // Contact Management
     @Override
     @Transactional(readOnly = true)
     public int getEmergencyContactCount(UUID patientId) {
         return (int) countByPatientId(patientId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean hasMultipleEmergencyContacts(UUID patientId) {
-        return countByPatientId(patientId) > 1;
     }
 
     @Override
@@ -385,12 +334,4 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
         return existsByPatientId(patientId);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<String> getContactsByRelationship(UUID patientId, String relationship) {
-        List<PatientEmergencyContact> contacts = patientEmergencyContactRepository.findByPatientIdAndRelationshipContainingIgnoreCase(patientId, relationship);
-        return contacts.stream()
-                .map(PatientEmergencyContact::getName)
-                .collect(Collectors.toList());
-    }
 }

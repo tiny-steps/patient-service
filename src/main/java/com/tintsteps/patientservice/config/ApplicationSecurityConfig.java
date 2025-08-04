@@ -1,5 +1,6 @@
 package com.tintsteps.patientservice.config;
 
+import com.tintsteps.patientservice.repository.PatientAddressRepository;
 import com.tintsteps.patientservice.repository.PatientRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class ApplicationSecurityConfig {
 
     private final PatientRepository patientRepository;
+    private final PatientAddressRepository patientAddressRepository;
 
     /**
      * Check if the authenticated user is the owner of the patient record
@@ -90,5 +92,23 @@ public class ApplicationSecurityConfig {
         return authentication != null &&
                authentication.getAuthorities().stream()
                        .anyMatch(authority -> authority.getAuthority().equals("ROLE_PATIENT"));
+    }
+
+    public boolean getIsPatientAddressOwner(Authentication authentication, UUID patientId) {
+        try {
+            if (authentication == null || authentication.getName() == null) {
+                log.warn("Authentication is null or has no name");
+                return false;
+            }
+
+            UUID currentUserId = UUID.fromString(authentication.getName());
+
+            return patientAddressRepository.findById(currentUserId)
+                    .map(patient -> patient.getAddressId().equals(patientId))
+                    .orElse(false);
+        } catch (Exception e) {
+            log.error("Error checking patient ownership: {}", e.getMessage());
+            return false;
+        }
     }
 }

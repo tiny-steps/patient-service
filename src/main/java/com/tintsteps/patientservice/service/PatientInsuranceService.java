@@ -19,6 +19,8 @@ public interface PatientInsuranceService {
     void delete(UUID id);
 
     // Search Operations - Only keep used methods
+    Page<PatientInsuranceDto> findByProvider(String provider,Pageable pageable);
+
     List<PatientInsuranceDto> findByProvider(String provider);
     Page<PatientInsuranceDto> searchInsurance(UUID patientId, String provider, String policyNumber,
                                              String coverageDetails, Pageable pageable);
@@ -41,4 +43,10 @@ public interface PatientInsuranceService {
 
     // Insurance Management - Only keep used methods
     boolean hasInsurance(UUID patientId);
+
+    int getInsuranceCount(UUID patientId);
+
+    List<String> getInsuranceProviders(UUID patientId);
+
+    List<UUID> findPatientsWithMultipleInsurances();
 }

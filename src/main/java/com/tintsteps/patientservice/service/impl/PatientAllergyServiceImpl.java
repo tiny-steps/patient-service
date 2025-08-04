@@ -16,7 +16,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -181,67 +180,6 @@ public class PatientAllergyServiceImpl implements PatientAllergyService {
         return allergies.map(patientAllergyMapper::patientAllergyToPatientAllergyDto);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientAllergyDto> findByReaction(String reaction) {
-        log.info("Finding allergies by reaction: {}", reaction);
-
-        List<PatientAllergy> allergies = patientAllergyRepository.findByReactionContainingIgnoreCase(reaction);
-        return allergies.stream()
-                .map(patientAllergyMapper::patientAllergyToPatientAllergyDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<PatientAllergyDto> findByReaction(String reaction, Pageable pageable) {
-        log.info("Finding allergies by reaction: {} with pagination", reaction);
-
-        Page<PatientAllergy> allergies = patientAllergyRepository.findByReactionContainingIgnoreCase(reaction, pageable);
-        return allergies.map(patientAllergyMapper::patientAllergyToPatientAllergyDto);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientAllergyDto> findByPatientAndAllergen(UUID patientId, String allergen) {
-        log.info("Finding allergies for patient ID: {} and allergen: {}", patientId, allergen);
-
-        List<PatientAllergy> allergies = patientAllergyRepository.findByPatientIdAndAllergenContainingIgnoreCase(patientId, allergen);
-        return allergies.stream()
-                .map(patientAllergyMapper::patientAllergyToPatientAllergyDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientAllergyDto> findByDateRange(Timestamp startDate, Timestamp endDate) {
-        log.info("Finding allergies by date range: {} - {}", startDate, endDate);
-
-        List<PatientAllergy> allergies = patientAllergyRepository.findByRecordedAtBetween(startDate, endDate);
-        return allergies.stream()
-                .map(patientAllergyMapper::patientAllergyToPatientAllergyDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<PatientAllergyDto> findByDateRange(Timestamp startDate, Timestamp endDate, Pageable pageable) {
-        log.info("Finding allergies by date range: {} - {} with pagination", startDate, endDate);
-
-        Page<PatientAllergy> allergies = patientAllergyRepository.findByRecordedAtBetween(startDate, endDate, pageable);
-        return allergies.map(patientAllergyMapper::patientAllergyToPatientAllergyDto);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<PatientAllergyDto> searchAllergies(UUID patientId, String allergen, String reaction,
-                                                  Timestamp startDate, Timestamp endDate, Pageable pageable) {
-        log.info("Searching allergies with multiple criteria");
-
-        // For now, implement basic search - can be enhanced with Specifications
-        Page<PatientAllergy> allergies = patientAllergyRepository.findAll(pageable);
-        return allergies.map(patientAllergyMapper::patientAllergyToPatientAllergyDto);
-    }
 
     @Override
     @Transactional
@@ -285,11 +223,6 @@ public class PatientAllergyServiceImpl implements PatientAllergyService {
         }
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientAllergyDto> getAllergiesForPatient(UUID patientId) {
-        return findByPatientId(patientId);
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -309,11 +242,6 @@ public class PatientAllergyServiceImpl implements PatientAllergyService {
         return patientAllergyRepository.existsByPatientId(patientId);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public boolean existsByPatientIdAndAllergen(UUID patientId, String allergen) {
-        return patientAllergyRepository.existsByPatientIdAndAllergen(patientId, allergen);
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -321,11 +249,6 @@ public class PatientAllergyServiceImpl implements PatientAllergyService {
         return patientAllergyRepository.countByPatientId(patientId);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public long countByAllergen(String allergen) {
-        return patientAllergyRepository.countByAllergenContainingIgnoreCase(allergen);
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -433,9 +356,4 @@ public class PatientAllergyServiceImpl implements PatientAllergyService {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public boolean hasMultipleAllergies(UUID patientId) {
-        return countByPatientId(patientId) > 1;
-    }
 }

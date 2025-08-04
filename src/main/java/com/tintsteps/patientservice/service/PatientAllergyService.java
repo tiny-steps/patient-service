@@ -4,7 +4,7 @@ import com.tintsteps.patientservice.dto.PatientAllergyDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,30 +25,17 @@ public interface PatientAllergyService {
     // Search Operations
     List<PatientAllergyDto> findByAllergen(String allergen);
     Page<PatientAllergyDto> findByAllergen(String allergen, Pageable pageable);
-    List<PatientAllergyDto> findByReaction(String reaction);
-    Page<PatientAllergyDto> findByReaction(String reaction, Pageable pageable);
-    List<PatientAllergyDto> findByPatientAndAllergen(UUID patientId, String allergen);
-    List<PatientAllergyDto> findByDateRange(Timestamp startDate, Timestamp endDate);
-    Page<PatientAllergyDto> findByDateRange(Timestamp startDate, Timestamp endDate, Pageable pageable);
-
-    // Advanced Search
-    Page<PatientAllergyDto> searchAllergies(UUID patientId, String allergen, String reaction,
-                                            Timestamp startDate, Timestamp endDate, Pageable pageable);
 
     // Business Operations
     PatientAllergyDto addAllergy(UUID patientId, String allergen, String reaction);
     void removeAllergy(UUID patientId, String allergen);
-    List<PatientAllergyDto> getAllergiesForPatient(UUID patientId);
-    boolean hasAllergy(UUID patientId, String allergen);
+        boolean hasAllergy(UUID patientId, String allergen);
 
     // Validation Operations
     boolean existsById(UUID id);
     boolean existsByPatientId(UUID patientId);
-    boolean existsByPatientIdAndAllergen(UUID patientId, String allergen);
-
     // Statistics Operations
     long countByPatientId(UUID patientId);
-    long countByAllergen(String allergen);
     long countAll();
     List<Object[]> getAllergenStatistics();
     List<String> getDistinctAllergens();
@@ -63,4 +50,6 @@ public interface PatientAllergyService {
     List<String> getCriticalAllergies(UUID patientId);
     boolean hasCriticalAllergies(UUID patientId);
     int getAllergyCount(UUID patientId);
+
+    List<String> getAllergens(UUID patientId);
 }

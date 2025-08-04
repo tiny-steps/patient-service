@@ -33,21 +33,21 @@ public class PatientInsuranceServiceImpl implements PatientInsuranceService {
     @Transactional
     public PatientInsuranceDto create(PatientInsuranceDto patientInsuranceDto) {
         log.info("Creating insurance for patient ID: {}", patientInsuranceDto.getPatientId());
-        
+
         try {
             if (patientInsuranceDto.getPatientId() == null) {
                 throw new IllegalArgumentException("Patient ID is required");
             }
-            
+
             // Verify patient exists
             Patient patient = patientRepository.findById(patientInsuranceDto.getPatientId())
                     .orElseThrow(() -> new PatientNotFoundException(patientInsuranceDto.getPatientId()));
-            
+
             PatientInsurance insurance = patientInsuranceMapper.patientInsuranceDtoToPatientInsurance(patientInsuranceDto);
             insurance.setPatient(patient);
-            
+
             PatientInsurance savedInsurance = patientInsuranceRepository.save(insurance);
-            
+
             log.info("Insurance created successfully with ID: {}", savedInsurance.getId());
             return patientInsuranceMapper.patientInsuranceToPatientInsuranceDto(savedInsurance);
         } catch (PatientNotFoundException e) {
@@ -62,10 +62,10 @@ public class PatientInsuranceServiceImpl implements PatientInsuranceService {
     @Transactional(readOnly = true)
     public PatientInsuranceDto findById(UUID id) {
         log.info("Finding insurance by ID: {}", id);
-        
+
         PatientInsurance insurance = patientInsuranceRepository.findById(id)
                 .orElseThrow(() -> new PatientServiceException("Insurance not found with id: " + id));
-        
+
         return patientInsuranceMapper.patientInsuranceToPatientInsuranceDto(insurance);
     }
 
@@ -73,7 +73,7 @@ public class PatientInsuranceServiceImpl implements PatientInsuranceService {
     @Transactional(readOnly = true)
     public List<PatientInsuranceDto> findByPatientId(UUID patientId) {
         log.info("Finding insurance by patient ID: {}", patientId);
-        
+
         List<PatientInsurance> insurances = patientInsuranceRepository.findByPatientId(patientId);
         return insurances.stream()
                 .map(patientInsuranceMapper::patientInsuranceToPatientInsuranceDto)
@@ -84,7 +84,7 @@ public class PatientInsuranceServiceImpl implements PatientInsuranceService {
     @Transactional(readOnly = true)
     public Page<PatientInsuranceDto> findAll(Pageable pageable) {
         log.info("Finding all insurance with pagination");
-        
+
         Page<PatientInsurance> insurances = patientInsuranceRepository.findAll(pageable);
         return insurances.map(patientInsuranceMapper::patientInsuranceToPatientInsuranceDto);
     }
@@ -93,11 +93,11 @@ public class PatientInsuranceServiceImpl implements PatientInsuranceService {
     @Transactional
     public PatientInsuranceDto update(UUID id, PatientInsuranceDto patientInsuranceDto) {
         log.info("Updating insurance with ID: {}", id);
-        
+
         try {
             PatientInsurance existingInsurance = patientInsuranceRepository.findById(id)
                     .orElseThrow(() -> new PatientServiceException("Insurance not found with id: " + id));
-            
+
             // Update fields
             if (patientInsuranceDto.getProvider() != null) {
                 existingInsurance.setProvider(patientInsuranceDto.getProvider());
@@ -108,7 +108,7 @@ public class PatientInsuranceServiceImpl implements PatientInsuranceService {
             if (patientInsuranceDto.getCoverageDetails() != null) {
                 existingInsurance.setCoverageDetails(patientInsuranceDto.getCoverageDetails());
             }
-            
+
             PatientInsurance updatedInsurance = patientInsuranceRepository.save(existingInsurance);
             return patientInsuranceMapper.patientInsuranceToPatientInsuranceDto(updatedInsurance);
         } catch (Exception e) {
@@ -127,12 +127,12 @@ public class PatientInsuranceServiceImpl implements PatientInsuranceService {
     @Transactional
     public void delete(UUID id) {
         log.info("Deleting insurance with ID: {}", id);
-        
+
         try {
             if (!patientInsuranceRepository.existsById(id)) {
                 throw new PatientServiceException("Insurance not found with id: " + id);
             }
-            
+
             patientInsuranceRepository.deleteById(id);
             log.info("Insurance deleted successfully with ID: {}", id);
         } catch (Exception e) {
@@ -160,54 +160,6 @@ public class PatientInsuranceServiceImpl implements PatientInsuranceService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PatientInsuranceDto> findByPolicyNumber(String policyNumber) {
-        List<PatientInsurance> insurances = patientInsuranceRepository.findByPolicyNumberContainingIgnoreCase(policyNumber);
-        return insurances.stream()
-                .map(patientInsuranceMapper::patientInsuranceToPatientInsuranceDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<PatientInsuranceDto> findByPolicyNumber(String policyNumber, Pageable pageable) {
-        Page<PatientInsurance> insurances = patientInsuranceRepository.findByPolicyNumberContainingIgnoreCase(policyNumber, pageable);
-        return insurances.map(patientInsuranceMapper::patientInsuranceToPatientInsuranceDto);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientInsuranceDto> findByCoverageDetails(String coverageDetails) {
-        List<PatientInsurance> insurances = patientInsuranceRepository.findByCoverageDetailsContainingIgnoreCase(coverageDetails);
-        return insurances.stream()
-                .map(patientInsuranceMapper::patientInsuranceToPatientInsuranceDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<PatientInsuranceDto> findByCoverageDetails(String coverageDetails, Pageable pageable) {
-        Page<PatientInsurance> insurances = patientInsuranceRepository.findByCoverageDetailsContainingIgnoreCase(coverageDetails, pageable);
-        return insurances.map(patientInsuranceMapper::patientInsuranceToPatientInsuranceDto);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<PatientInsuranceDto> findByPatientId(UUID patientId, Pageable pageable) {
-        Page<PatientInsurance> insurances = patientInsuranceRepository.findByPatientId(patientId, pageable);
-        return insurances.map(patientInsuranceMapper::patientInsuranceToPatientInsuranceDto);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientInsuranceDto> findByPatientAndProvider(UUID patientId, String provider) {
-        List<PatientInsurance> insurances = patientInsuranceRepository.findByPatientIdAndProviderContainingIgnoreCase(patientId, provider);
-        return insurances.stream()
-                .map(patientInsuranceMapper::patientInsuranceToPatientInsuranceDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Page<PatientInsuranceDto> searchInsurance(UUID patientId, String provider, String policyNumber, String coverageDetails, Pageable pageable) {
         // For now, implement basic search - can be enhanced with Specifications
         Page<PatientInsurance> insurances = patientInsuranceRepository.findAll(pageable);
@@ -219,17 +171,17 @@ public class PatientInsuranceServiceImpl implements PatientInsuranceService {
     @Transactional
     public PatientInsuranceDto addInsurance(UUID patientId, String provider, String policyNumber, String coverageDetails) {
         log.info("Adding insurance for patient ID: {}", patientId);
-        
+
         try {
             Patient patient = patientRepository.findById(patientId)
                     .orElseThrow(() -> new PatientNotFoundException(patientId));
-            
+
             PatientInsurance insurance = new PatientInsurance();
             insurance.setPatient(patient);
             insurance.setProvider(provider);
             insurance.setPolicyNumber(policyNumber);
             insurance.setCoverageDetails(coverageDetails);
-            
+
             PatientInsurance savedInsurance = patientInsuranceRepository.save(insurance);
             return patientInsuranceMapper.patientInsuranceToPatientInsuranceDto(savedInsurance);
         } catch (PatientNotFoundException e) {
@@ -244,21 +196,15 @@ public class PatientInsuranceServiceImpl implements PatientInsuranceService {
     @Transactional
     public void removeInsurance(UUID patientId, String policyNumber) {
         log.info("Removing insurance for patient ID: {} with policy: {}", patientId, policyNumber);
-        
+
         List<PatientInsurance> insurances = patientInsuranceRepository.findByPatientId(patientId);
         List<PatientInsurance> insurancesToDelete = insurances.stream()
                 .filter(insurance -> insurance.getPolicyNumber().equals(policyNumber))
                 .collect(Collectors.toList());
-        
+
         if (!insurancesToDelete.isEmpty()) {
             patientInsuranceRepository.deleteAll(insurancesToDelete);
         }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PatientInsuranceDto> getInsuranceForPatient(UUID patientId) {
-        return findByPatientId(patientId);
     }
 
     @Override
@@ -278,42 +224,25 @@ public class PatientInsuranceServiceImpl implements PatientInsuranceService {
     }
 
     // Validation Operations
-    @Override
     @Transactional(readOnly = true)
     public boolean existsById(UUID id) {
         return patientInsuranceRepository.existsById(id);
     }
 
-    @Override
     @Transactional(readOnly = true)
     public boolean existsByPatientId(UUID patientId) {
         return patientInsuranceRepository.existsByPatientId(patientId);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public boolean existsByPolicyNumber(String policyNumber) {
-        return patientInsuranceRepository.existsByPolicyNumber(policyNumber);
-    }
 
-    @Override
-    @Transactional(readOnly = true)
-    public boolean existsByPatientIdAndPolicyNumber(UUID patientId, String policyNumber) {
-        return patientInsuranceRepository.existsByPatientIdAndPolicyNumber(patientId, policyNumber);
-    }
 
     // Statistics Operations
-    @Override
+
     @Transactional(readOnly = true)
     public long countByPatientId(UUID patientId) {
         return patientInsuranceRepository.countByPatientId(patientId);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public long countByProvider(String provider) {
-        return patientInsuranceRepository.countByProviderContainingIgnoreCase(provider);
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -379,13 +308,6 @@ public class PatientInsuranceServiceImpl implements PatientInsuranceService {
         patientInsuranceRepository.deleteByPatientId(patientId);
     }
 
-    @Override
-    @Transactional
-    public void deleteBatch(List<UUID> ids) {
-        log.info("Deleting batch of {} insurances", ids.size());
-        patientInsuranceRepository.deleteAllById(ids);
-    }
-
     // Insurance Management
     @Override
     @Transactional(readOnly = true)
@@ -393,11 +315,6 @@ public class PatientInsuranceServiceImpl implements PatientInsuranceService {
         return (int) countByPatientId(patientId);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public boolean hasMultipleInsurances(UUID patientId) {
-        return countByPatientId(patientId) > 1;
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -414,20 +331,4 @@ public class PatientInsuranceServiceImpl implements PatientInsuranceService {
         return existsByPatientId(patientId);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<String> getPolicyNumbers(UUID patientId) {
-        List<PatientInsurance> insurances = patientInsuranceRepository.findByPatientId(patientId);
-        return insurances.stream()
-                .map(PatientInsurance::getPolicyNumber)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean isInsuranceActive(UUID id) {
-        // For now, assume all insurances are active unless explicitly marked otherwise
-        // This could be enhanced with an 'active' field in the entity
-        return existsById(id);
-    }
 }

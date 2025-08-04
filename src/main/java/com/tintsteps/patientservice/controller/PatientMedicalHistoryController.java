@@ -13,6 +13,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -84,8 +86,8 @@ public class PatientMedicalHistoryController {
             @RequestParam(required = false) UUID patientId,
             @RequestParam(required = false) String condition,
             @RequestParam(required = false) String notes,
-            @RequestParam(required = false) Timestamp startDate,
-            @RequestParam(required = false) Timestamp endDate,
+            @RequestParam(required = false) Instant startDate,
+            @RequestParam(required = false) Instant endDate,
             Pageable pageable) {
         Page<PatientMedicalHistoryDto> history = patientMedicalHistoryService.searchMedicalHistory(
                 patientId, condition, notes, startDate, endDate, pageable);
