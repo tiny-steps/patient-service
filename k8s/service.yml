@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ts-patient-service
+spec:
+  type: ClusterIP
+  selector:
+    app: ts-patient-service
+  ports:
+    - protocol: TCP
+      port: 8085
+      targetPort: 8085

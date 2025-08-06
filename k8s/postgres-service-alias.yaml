@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service # The simple name our app is looking for
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+  selector:
+    # This selector points to the pod created by Helm
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/instance: tiny-steps-postgres # <-- Update this line

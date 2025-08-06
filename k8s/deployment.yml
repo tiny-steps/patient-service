@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ts-patient-service-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ts-patient-service
+  template:
+    metadata:
+      labels:
+        app: ts-patient-service
+    spec:
+      containers:
+        - name: ts-patient-service
+          image: subhankarm2312/ts-patient-service:f6b0bf3-20250805102201 # This will be updated by the pipeline
+          ports:
+            - containerPort: 8085
+          envFrom:
+            - configMapRef:
+                name: ts-patient-service-config
+            - secretRef:
+                name: ts-patient-db-credentials
