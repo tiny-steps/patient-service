@@ -15,6 +15,16 @@ spec:
       containers:
         - name: ts-patient-service
           image: subhankarm2312/ts-patient-service:fce24da-20250806135947 # This will be updated by the pipeline
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Xms128m -Xmx256m"
+          resources:
+            requests:
+              memory: "256Mi" # Request 256 MiB of memory
+              cpu: "250m"      # Request 0.25 of a CPU core
+            limits:
+              memory: "512Mi" # Limit the pod to a max of 512 MiB
+              cpu: "500m"      # Limit the pod to a max of 0.5 of a CPU core
           ports:
             - containerPort: 8085
           envFrom:
