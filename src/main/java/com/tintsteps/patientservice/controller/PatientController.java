@@ -1,6 +1,7 @@
 package com.tintsteps.patientservice.controller;
 
 import com.tintsteps.patientservice.dto.PatientDto;
+import com.tintsteps.patientservice.dto.PatientRegistrationDto;
 import com.tintsteps.patientservice.model.Gender;
 import com.tintsteps.patientservice.model.ResponseModel;
 import com.tintsteps.patientservice.service.PatientService;
@@ -37,6 +38,16 @@ public class PatientController {
         PatientDto createdPatient = patientService.create(patientDto);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ResponseModel.created(createdPatient, "Patient created successfully"));
+    }
+
+    @PostMapping("/register")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('PATIENT')")
+    public ResponseEntity<ResponseModel<PatientDto>> registerPatient(
+            @Valid @RequestBody PatientRegistrationDto registrationDto,
+            Authentication authentication) {
+        PatientDto createdPatient = patientService.registerPatient(registrationDto);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ResponseModel.created(createdPatient, "Patient registered and created successfully"));
     }
 
     @GetMapping("/{id}")

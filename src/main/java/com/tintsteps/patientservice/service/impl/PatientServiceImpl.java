@@ -1,8 +1,12 @@
 package com.tintsteps.patientservice.service.impl;
 
 import com.tintsteps.patientservice.dto.PatientDto;
+import com.tintsteps.patientservice.dto.PatientRegistrationDto;
+import com.tintsteps.patientservice.dto.UserRegistrationRequest;
+import com.tintsteps.patientservice.dto.UserRegistrationResponse;
 import com.tintsteps.patientservice.exception.PatientNotFoundException;
 import com.tintsteps.patientservice.exception.PatientServiceException;
+import com.tintsteps.patientservice.integration.AuthServiceIntegration;
 import com.tintsteps.patientservice.mapper.PatientMapper;
 import com.tintsteps.patientservice.model.Gender;
 import com.tintsteps.patientservice.model.Patient;
@@ -33,19 +37,20 @@ public class PatientServiceImpl implements PatientService {
 
     private final PatientRepository patientRepository;
     private final PatientMapper patientMapper = PatientMapper.INSTANCE;
+    private final AuthServiceIntegration authServiceIntegration;
 
     @Override
     @Transactional
     public PatientDto create(PatientDto patientDto) {
-        log.info("Creating patient for user ID: {}", patientDto.getUserId());
+        log.info("Creating patient for user ID: {}", patientDto.getId());
 
         try {
-            if (patientDto.getUserId() == null) {
+            if (patientDto.getId() == null) {
                 throw new IllegalArgumentException("User ID is required");
             }
 
-            if (existsByUserId(patientDto.getUserId())) {
-                throw new PatientServiceException("Patient already exists for user ID: " + patientDto.getUserId());
+            if (existsByUserId(patientDto.getId())) {
+                throw new PatientServiceException("Patient already exists for user ID: " + patientDto.getId());
             }
 
             Patient patient = patientMapper.patientDtoToPatient(patientDto);
@@ -446,5 +451,49 @@ public class PatientServiceImpl implements PatientService {
     public Page<PatientDto> findByAgeBetween(Integer minAge, Integer maxAge, Pageable pageable) {
         Page<Patient> patients = patientRepository.findByAgeBetween(minAge, maxAge, pageable);
         return patients.map(patientMapper::patientToPatientDto);
+    }
+
+    @Override
+    @Transactional
+    public PatientDto registerPatient(PatientRegistrationDto registrationDto) {
+        log.info("Registering new patient with email: {}", registrationDto.getEmail());
+
+        try {
+            // Step 1: Register user via auth-service using integration
+            UserRegistrationRequest userRequest = UserRegistrationRequest.builder()
+                    .name(registrationDto.getName())
+                    .email(registrationDto.getEmail())
+                    .password(registrationDto.getPassword())
+                    .role(registrationDto.getRole())
+                    .build();
+
+            UserRegistrationResponse userResponse = authServiceIntegration.registerUser(userRequest).get();
+
+            if (userResponse == null || userResponse.getId() == null) {
+                throw new PatientServiceException("Failed to register user - no user ID returned");
+            }
+
+            UUID userId = userResponse.getId();
+            log.info("User registered successfully with ID: {}", userId);
+
+            // Step 2: Create patient with the returned user ID
+            PatientDto patientDto = new PatientDto();
+            patientDto.setId(userId);
+            patientDto.setDateOfBirth(registrationDto.getDateOfBirth());
+            patientDto.setGender(registrationDto.getGender());
+            patientDto.setBloodGroup(registrationDto.getBloodGroup());
+            patientDto.setHeightCm(registrationDto.getHeightCm());
+            patientDto.setWeightKg(registrationDto.getWeightKg());
+
+            Patient patient = patientMapper.patientDtoToPatient(patientDto);
+            Patient savedPatient = patientRepository.save(patient);
+
+            log.info("Patient registered and created successfully with ID: {}", savedPatient.getId());
+            return patientMapper.patientToPatientDto(savedPatient);
+
+        } catch (Exception e) {
+            log.error("Error registering patient: {}", e.getMessage(), e);
+            throw new PatientServiceException("Failed to register patient", e);
+        }
     }
 }

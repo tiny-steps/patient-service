@@ -1,6 +1,7 @@
 package com.tintsteps.patientservice.service;
 
 import com.tintsteps.patientservice.dto.PatientDto;
+import com.tintsteps.patientservice.dto.PatientRegistrationDto;
 import com.tintsteps.patientservice.model.Gender;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -64,4 +65,6 @@ public interface PatientService {
     boolean hasMedicalInfo(UUID id);
 
     Page<PatientDto> findByAgeRange(Integer minAge, Integer maxAge, Pageable pageable);
+
+    PatientDto registerPatient(PatientRegistrationDto registrationDto);
 }

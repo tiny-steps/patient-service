@@ -41,57 +41,85 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
 
 # Integration service URLs
-integration:
+services:
+  auth-service:
+    base-url: http://ts-auth-service
   user-service:
-    base-url: http://ts-user-service/api/v1/users
+    base-url: http://ts-user-service
   address-service:
-    base-url: http://ts-address-service/api/v1/addresses
-  session-service:
-    base-url: http://ts-schedule-service/api/v1/schedules
+    base-url: http://ts-address-service
+  schedule-service:
+    base-url: http://ts-schedule-service
 
 # Resilience4j Configuration
 resilience4j:
   circuitbreaker:
     instances:
+      ts-auth-service:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
       ts-user-service:
-        register-health-indicator: true
-        sliding-window-size: 10
-        minimum-number-of-calls: 5
-        permitted-number-of-calls-in-half-open-state: 3
-        wait-duration-in-open-state: 30s
-        failure-rate-threshold: 50
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
       ts-address-service:
-        register-health-indicator: true
-        sliding-window-size: 10
-        minimum-number-of-calls: 5
-        permitted-number-of-calls-in-half-open-state: 3
-        wait-duration-in-open-state: 30s
-        failure-rate-threshold: 50
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
       ts-schedule-service:
-        register-health-indicator: true
-        sliding-window-size: 10
-        minimum-number-of-calls: 5
-        permitted-number-of-calls-in-half-open-state: 3
-        wait-duration-in-open-state: 30s
-        failure-rate-threshold: 50
-
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
   retry:
     instances:
+      ts-auth-service:
+        maxAttempts: 3
+        waitDuration: 2s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
       ts-user-service:
-        max-attempts: 3
-        wait-duration: 1s
+        maxAttempts: 3
+        waitDuration: 2s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
       ts-address-service:
-        max-attempts: 3
-        wait-duration: 1s
+        maxAttempts: 3
+        waitDuration: 2s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
       ts-schedule-service:
-        max-attempts: 3
-        wait-duration: 1s
-
+        maxAttempts: 3
+        waitDuration: 2s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
   timelimiter:
     instances:
+      ts-auth-service:
+        timeoutDuration: 10s
       ts-user-service:
-        timeout-duration: 10s
+        timeoutDuration: 5s
       ts-address-service:
-        timeout-duration: 10s
+        timeoutDuration: 5s
       ts-schedule-service:
-        timeout-duration: 10s
+        timeoutDuration: 5s
