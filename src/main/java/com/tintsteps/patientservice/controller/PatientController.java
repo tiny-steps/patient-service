@@ -13,6 +13,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -32,6 +34,7 @@ public class PatientController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('PATIENT')")
+    @CacheEvict(value = "patients", allEntries = true)
     public ResponseEntity<ResponseModel<PatientDto>> createPatient(
             @Valid @RequestBody PatientDto patientDto,
             Authentication authentication) {
@@ -42,6 +45,7 @@ public class PatientController {
 
     @PostMapping("/register")
     @PreAuthorize("hasRole('ADMIN') or hasRole('PATIENT')")
+    @CacheEvict(value = "patients", allEntries = true)
     public ResponseEntity<ResponseModel<PatientDto>> registerPatient(
             @Valid @RequestBody PatientRegistrationDto registrationDto,
             Authentication authentication) {
@@ -52,13 +56,15 @@ public class PatientController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('DOCTOR') or @patientSecurity.isPatientOwner(authentication, #id)")
+    @Cacheable(value = "patients", key = "#id")
     public ResponseEntity<ResponseModel<PatientDto>> getPatientById(@PathVariable UUID id) {
         PatientDto patient = patientService.findById(id);
         return ResponseEntity.ok(ResponseModel.success(patient, "Patient retrieved successfully"));
     }
 
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('DOCTOR') or @patientSecurity.isUserOwner(authentication, #userId)")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('DOCTOR') or @patientSecurity.isPatientOwner(authentication, #userId)")
+    @Cacheable(value = "patients", key = "'user-' + #userId")
     public ResponseEntity<ResponseModel<PatientDto>> getPatientByUserId(@PathVariable UUID userId) {
         PatientDto patient = patientService.findByUserId(userId);
         return ResponseEntity.ok(ResponseModel.success(patient, "Patient retrieved successfully"));
@@ -73,6 +79,7 @@ public class PatientController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or @patientSecurity.isPatientOwner(authentication, #id)")
+    @CacheEvict(value = "patients", key = "#id")
     public ResponseEntity<ResponseModel<PatientDto>> updatePatient(
             @PathVariable UUID id,
             @Valid @RequestBody PatientDto patientDto) {
@@ -82,6 +89,7 @@ public class PatientController {
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or @patientSecurity.isPatientOwner(authentication, #id)")
+    @CacheEvict(value = "patients", key = "#id")
     public ResponseEntity<ResponseModel<PatientDto>> partialUpdatePatient(
             @PathVariable UUID id,
             @RequestBody PatientDto patientDto) {
@@ -91,6 +99,7 @@ public class PatientController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @CacheEvict(value = "patients", key = "#id")
     public ResponseEntity<ResponseModel<Void>> deletePatient(@PathVariable UUID id) {
         patientService.delete(id);
         return ResponseEntity.ok(ResponseModel.success("Patient deleted successfully"));
@@ -126,6 +135,7 @@ public class PatientController {
 
     @PatchMapping("/{id}/medical-info")
     @PreAuthorize("hasRole('ADMIN') or hasRole('DOCTOR') or @patientSecurity.isPatientOwner(authentication, #id)")
+    @CacheEvict(value = "patients", key = "#id")
     public ResponseEntity<ResponseModel<PatientDto>> updateMedicalInfo(
             @PathVariable UUID id,
             @RequestParam(required = false) Integer heightCm,
@@ -137,6 +147,7 @@ public class PatientController {
 
     @PatchMapping("/{id}/personal-info")
     @PreAuthorize("hasRole('ADMIN') or @patientSecurity.isPatientOwner(authentication, #id)")
+    @CacheEvict(value = "patients", key = "#id")
     public ResponseEntity<ResponseModel<PatientDto>> updatePersonalInfo(
             @PathVariable UUID id,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date dateOfBirth,
@@ -186,12 +197,12 @@ public class PatientController {
                     public final List<Object[]> bloodGroupStats = patientService.getBloodGroupStatistics();
                     public final List<String> distinctBloodGroups = patientService.getDistinctBloodGroups();
                 },
-                "Patient statistics retrieved successfully"
-        ));
+                "Patient statistics retrieved successfully"));
     }
 
     @PostMapping("/batch")
     @PreAuthorize("hasRole('ADMIN')")
+    @CacheEvict(value = "patients", allEntries = true)
     public ResponseEntity<ResponseModel<List<PatientDto>>> createBatch(
             @Valid @RequestBody List<PatientDto> patientDtos) {
         List<PatientDto> createdPatients = patientService.createBatch(patientDtos);
@@ -201,6 +212,7 @@ public class PatientController {
 
     @DeleteMapping("/batch")
     @PreAuthorize("hasRole('ADMIN')")
+    @CacheEvict(value = "patients", allEntries = true)
     public ResponseEntity<ResponseModel<Void>> deleteBatch(@RequestBody List<UUID> ids) {
         patientService.deleteBatch(ids);
         return ResponseEntity.ok(ResponseModel.success("Batch patients deleted successfully"));

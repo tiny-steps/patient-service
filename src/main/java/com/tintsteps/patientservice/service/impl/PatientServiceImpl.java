@@ -14,6 +14,8 @@ import com.tintsteps.patientservice.repository.PatientRepository;
 import com.tintsteps.patientservice.service.PatientService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -41,6 +43,7 @@ public class PatientServiceImpl implements PatientService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "patients", allEntries = true)
     public PatientDto create(PatientDto patientDto) {
         log.info("Creating patient for user ID: {}", patientDto.getId());
 
@@ -66,6 +69,7 @@ public class PatientServiceImpl implements PatientService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "patients", key = "#id")
     public PatientDto findById(UUID id) {
         log.info("Finding patient by ID: {}", id);
 
@@ -77,6 +81,7 @@ public class PatientServiceImpl implements PatientService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "patients", key = "'user-' + #userId")
     public PatientDto findByUserId(UUID userId) {
         log.info("Finding patient by user ID: {}", userId);
 
@@ -97,6 +102,7 @@ public class PatientServiceImpl implements PatientService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "patients", key = "#id")
     public PatientDto update(UUID id, PatientDto patientDto) {
         log.info("Updating patient with ID: {}", id);
 
@@ -135,12 +141,14 @@ public class PatientServiceImpl implements PatientService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "patients", key = "#id")
     public PatientDto partialUpdate(UUID id, PatientDto patientDto) {
         return update(id, patientDto); // Same implementation for now
     }
 
     @Override
     @Transactional
+    @CacheEvict(value = "patients", key = "#id")
     public void delete(UUID id) {
         log.info("Deleting patient with ID: {}", id);
 
@@ -186,6 +194,7 @@ public class PatientServiceImpl implements PatientService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "patients", key = "#id")
     public PatientDto updateMedicalInfo(UUID id, Integer heightCm, BigDecimal weightKg, String bloodGroup) {
         log.info("Updating medical info for patient ID: {}", id);
 
@@ -463,6 +472,7 @@ public class PatientServiceImpl implements PatientService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "patients", allEntries = true)
     public PatientDto registerPatient(PatientRegistrationDto registrationDto) {
         log.info("Registering new patient with email: {}", registrationDto.getEmail());
 
