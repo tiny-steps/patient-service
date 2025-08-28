@@ -11,6 +11,7 @@ public class PatientRegistrationDto {
     private String name;
     private String email;
     private String password;
+    private String phone;
     private final String role = "PATIENT";
     private Date dateOfBirth;
     private Gender gender;

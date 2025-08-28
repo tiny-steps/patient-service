@@ -3,10 +3,10 @@ package com.tintsteps.patientservice.service.impl;
 import com.tintsteps.patientservice.dto.PatientDto;
 import com.tintsteps.patientservice.dto.PatientRegistrationDto;
 import com.tintsteps.patientservice.dto.UserRegistrationRequest;
-import com.tintsteps.patientservice.dto.UserRegistrationResponse;
 import com.tintsteps.patientservice.exception.PatientNotFoundException;
 import com.tintsteps.patientservice.exception.PatientServiceException;
 import com.tintsteps.patientservice.integration.AuthServiceIntegration;
+import com.tintsteps.patientservice.integration.model.UserModel;
 import com.tintsteps.patientservice.mapper.PatientMapper;
 import com.tintsteps.patientservice.model.Gender;
 import com.tintsteps.patientservice.model.Patient;
@@ -177,7 +177,6 @@ public class PatientServiceImpl implements PatientService {
         return patients.map(patientMapper::patientToPatientDto);
     }
 
-
     @Override
     public List<PatientDto> findAll() {
         return patientRepository.findAll().stream()
@@ -272,7 +271,8 @@ public class PatientServiceImpl implements PatientService {
         }
 
         // BMI = weight(kg) / (height(m))^2
-        BigDecimal heightInMeters = BigDecimal.valueOf(patient.getHeightCm()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        BigDecimal heightInMeters = BigDecimal.valueOf(patient.getHeightCm()).divide(BigDecimal.valueOf(100), 2,
+                RoundingMode.HALF_UP);
         BigDecimal heightSquared = heightInMeters.multiply(heightInMeters);
 
         return patient.getWeightKg().divide(heightSquared, 2, RoundingMode.HALF_UP);
@@ -296,11 +296,16 @@ public class PatientServiceImpl implements PatientService {
 
         List<String> missingFields = new ArrayList<>();
 
-        if (patient.getDateOfBirth() == null) missingFields.add("dateOfBirth");
-        if (patient.getGender() == null) missingFields.add("gender");
-        if (patient.getBloodGroup() == null) missingFields.add("bloodGroup");
-        if (patient.getHeightCm() == null) missingFields.add("height");
-        if (patient.getWeightKg() == null) missingFields.add("weight");
+        if (patient.getDateOfBirth() == null)
+            missingFields.add("dateOfBirth");
+        if (patient.getGender() == null)
+            missingFields.add("gender");
+        if (patient.getBloodGroup() == null)
+            missingFields.add("bloodGroup");
+        if (patient.getHeightCm() == null)
+            missingFields.add("height");
+        if (patient.getWeightKg() == null)
+            missingFields.add("weight");
 
         return missingFields;
     }
@@ -310,7 +315,6 @@ public class PatientServiceImpl implements PatientService {
     public long countAll() {
         return patientRepository.count();
     }
-
 
     @Override
     @Transactional(readOnly = true)
@@ -391,11 +395,16 @@ public class PatientServiceImpl implements PatientService {
         int totalFields = 5; // userId, dateOfBirth, gender, bloodGroup, height, weight
         int completedFields = 1; // userId is always present
 
-        if (patient.getDateOfBirth() != null) completedFields++;
-        if (patient.getGender() != null) completedFields++;
-        if (patient.getBloodGroup() != null) completedFields++;
-        if (patient.getHeightCm() != null) completedFields++;
-        if (patient.getWeightKg() != null) completedFields++;
+        if (patient.getDateOfBirth() != null)
+            completedFields++;
+        if (patient.getGender() != null)
+            completedFields++;
+        if (patient.getBloodGroup() != null)
+            completedFields++;
+        if (patient.getHeightCm() != null)
+            completedFields++;
+        if (patient.getWeightKg() != null)
+            completedFields++;
 
         return (completedFields * 100) / totalFields;
     }
@@ -425,13 +434,13 @@ public class PatientServiceImpl implements PatientService {
         return patients.map(patientMapper::patientToPatientDto);
     }
 
-
-
     @Override
     @Transactional(readOnly = true)
     public boolean hasEmergencyContacts(UUID patientId) {
-        // This would typically be implemented by checking if the patient has emergency contacts
-        // For now, return false as a placeholder - this should be implemented with proper integration
+        // This would typically be implemented by checking if the patient has emergency
+        // contacts
+        // For now, return false as a placeholder - this should be implemented with
+        // proper integration
         return false;
     }
 
@@ -444,7 +453,6 @@ public class PatientServiceImpl implements PatientService {
                 .map(patientMapper::patientToPatientDto)
                 .collect(Collectors.toList());
     }
-
 
     @Override
     @Transactional(readOnly = true)
@@ -464,16 +472,17 @@ public class PatientServiceImpl implements PatientService {
                     .name(registrationDto.getName())
                     .email(registrationDto.getEmail())
                     .password(registrationDto.getPassword())
+                    .phone(registrationDto.getPhone())
                     .role(registrationDto.getRole())
                     .build();
 
-            UserRegistrationResponse userResponse = authServiceIntegration.registerUser(userRequest).get();
+            UserModel userResponse = authServiceIntegration.registerUser(userRequest).block();
 
-            if (userResponse == null || userResponse.getId() == null) {
+            if (userResponse == null || userResponse.id() == null) {
                 throw new PatientServiceException("Failed to register user - no user ID returned");
             }
 
-            UUID userId = userResponse.getId();
+            UUID userId = UUID.fromString(userResponse.id());
             log.info("User registered successfully with ID: {}", userId);
 
             // Step 2: Create patient with the returned user ID

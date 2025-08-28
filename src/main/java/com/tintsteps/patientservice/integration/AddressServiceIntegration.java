@@ -21,7 +21,7 @@ import java.util.concurrent.CompletableFuture;
 @RequiredArgsConstructor
 public class AddressServiceIntegration {
 
-    private final WebClient.Builder webClientBuilder;
+    private final WebClient publicWebClient;
 
     @Value("${services.address-service.base-url:http://ts-address-service}")
     private String addressServiceBaseUrl;
@@ -31,9 +31,8 @@ public class AddressServiceIntegration {
     @TimeLimiter(name = "ts-address-service")
     public CompletableFuture<AddressDto> getAddressById(UUID addressId) {
         log.info("Fetching address by ID: {}", addressId);
-        
-        return webClientBuilder.build()
-                .get()
+
+        return publicWebClient.get()
                 .uri(addressServiceBaseUrl + "/api/v1/addresses/{id}", addressId)
                 .retrieve()
                 .bodyToMono(AddressDto.class)
@@ -46,9 +45,8 @@ public class AddressServiceIntegration {
     @TimeLimiter(name = "ts-address-service")
     public CompletableFuture<List<AddressDto>> getAddressesByUserId(String userId) {
         log.info("Fetching addresses for user ID: {}", userId);
-        
-        return webClientBuilder.build()
-                .get()
+
+        return publicWebClient.get()
                 .uri(addressServiceBaseUrl + "/api/v1/addresses/user/{userId}", userId)
                 .retrieve()
                 .bodyToFlux(AddressDto.class)
@@ -62,9 +60,8 @@ public class AddressServiceIntegration {
     @TimeLimiter(name = "ts-address-service")
     public CompletableFuture<List<AddressDto>> getAddressesByUserIdAndType(String userId, String type) {
         log.info("Fetching addresses for user ID: {} and type: {}", userId, type);
-        
-        return webClientBuilder.build()
-                .get()
+
+        return publicWebClient.get()
                 .uri(addressServiceBaseUrl + "/api/v1/addresses/user/{userId}/type/{type}", userId, type)
                 .retrieve()
                 .bodyToFlux(AddressDto.class)
@@ -78,9 +75,8 @@ public class AddressServiceIntegration {
     @TimeLimiter(name = "ts-address-service")
     public CompletableFuture<AddressDto> createAddress(AddressDto addressDto) {
         log.info("Creating address for user ID: {}", addressDto.getUserId());
-        
-        return webClientBuilder.build()
-                .post()
+
+        return publicWebClient.post()
                 .uri(addressServiceBaseUrl + "/api/v1/addresses")
                 .bodyValue(addressDto)
                 .retrieve()
@@ -94,9 +90,8 @@ public class AddressServiceIntegration {
     @TimeLimiter(name = "ts-address-service")
     public CompletableFuture<AddressDto> updateAddress(UUID addressId, AddressDto addressDto) {
         log.info("Updating address ID: {}", addressId);
-        
-        return webClientBuilder.build()
-                .put()
+
+        return publicWebClient.put()
                 .uri(addressServiceBaseUrl + "/api/v1/addresses/{id}", addressId)
                 .bodyValue(addressDto)
                 .retrieve()
@@ -110,9 +105,8 @@ public class AddressServiceIntegration {
     @TimeLimiter(name = "ts-address-service")
     public CompletableFuture<Void> deleteAddress(UUID addressId) {
         log.info("Deleting address ID: {}", addressId);
-        
-        return webClientBuilder.build()
-                .delete()
+
+        return publicWebClient.delete()
                 .uri(addressServiceBaseUrl + "/api/v1/addresses/{id}", addressId)
                 .retrieve()
                 .bodyToMono(Void.class)
@@ -125,9 +119,8 @@ public class AddressServiceIntegration {
     @TimeLimiter(name = "ts-address-service")
     public CompletableFuture<Boolean> validateAddress(UUID addressId) {
         log.info("Validating address: {}", addressId);
-        
-        return webClientBuilder.build()
-                .get()
+
+        return publicWebClient.get()
                 .uri(addressServiceBaseUrl + "/api/v1/addresses/{id}/validate", addressId)
                 .retrieve()
                 .bodyToMono(Boolean.class)
@@ -151,8 +144,10 @@ public class AddressServiceIntegration {
         return CompletableFuture.completedFuture(List.of());
     }
 
-    public CompletableFuture<List<AddressDto>> getAddressesByUserIdAndTypeFallback(String userId, String type, Exception ex) {
-        log.warn("Address service fallback triggered for getAddressesByUserIdAndType: {}, {}, error: {}", userId, type, ex.getMessage());
+    public CompletableFuture<List<AddressDto>> getAddressesByUserIdAndTypeFallback(String userId, String type,
+            Exception ex) {
+        log.warn("Address service fallback triggered for getAddressesByUserIdAndType: {}, {}, error: {}", userId, type,
+                ex.getMessage());
         return CompletableFuture.completedFuture(List.of());
     }
 
