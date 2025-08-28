@@ -11,6 +11,8 @@ import com.tintsteps.patientservice.repository.PatientRepository;
 import com.tintsteps.patientservice.service.PatientEmergencyContactService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,7 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
 
     @Override
     @Transactional
+    @CacheEvict(value = { "patient-emergency-contacts", "patients" }, allEntries = true)
     public PatientEmergencyContactDto create(PatientEmergencyContactDto patientEmergencyContactDto) {
         log.info("Creating emergency contact for patient ID: {}", patientEmergencyContactDto.getPatientId());
 
@@ -43,7 +46,8 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
             Patient patient = patientRepository.findById(patientEmergencyContactDto.getPatientId())
                     .orElseThrow(() -> new PatientNotFoundException(patientEmergencyContactDto.getPatientId()));
 
-            PatientEmergencyContact contact = patientEmergencyContactMapper.patientEmergencyContactDtoToPatientEmergencyContact(patientEmergencyContactDto);
+            PatientEmergencyContact contact = patientEmergencyContactMapper
+                    .patientEmergencyContactDtoToPatientEmergencyContact(patientEmergencyContactDto);
             contact.setPatient(patient);
 
             PatientEmergencyContact savedContact = patientEmergencyContactRepository.save(contact);
@@ -60,6 +64,7 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "patient-emergency-contacts", key = "#id")
     public PatientEmergencyContactDto findById(UUID id) {
         log.info("Finding emergency contact by ID: {}", id);
 
@@ -91,6 +96,7 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
 
     @Override
     @Transactional
+    @CacheEvict(value = { "patient-emergency-contacts", "patients" }, key = "#id")
     public PatientEmergencyContactDto update(UUID id, PatientEmergencyContactDto patientEmergencyContactDto) {
         log.info("Updating emergency contact with ID: {}", id);
 
@@ -125,6 +131,7 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
 
     @Override
     @Transactional
+    @CacheEvict(value = { "patient-emergency-contacts", "patients" }, key = "#id")
     public void delete(UUID id) {
         log.info("Deleting emergency contact with ID: {}", id);
 
@@ -146,11 +153,10 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
     @Override
     @Transactional(readOnly = true)
     public Page<PatientEmergencyContactDto> findByRelationship(String relationship, Pageable pageable) {
-        Page<PatientEmergencyContact> contacts = patientEmergencyContactRepository.findByRelationshipContainingIgnoreCase(relationship, pageable);
+        Page<PatientEmergencyContact> contacts = patientEmergencyContactRepository
+                .findByRelationshipContainingIgnoreCase(relationship, pageable);
         return contacts.map(patientEmergencyContactMapper::patientEmergencyContactToPatientEmergencyContactDto);
     }
-
-
 
     @Override
     @Transactional(readOnly = true)
@@ -159,10 +165,10 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
         return contacts.map(patientEmergencyContactMapper::patientEmergencyContactToPatientEmergencyContactDto);
     }
 
-
     @Override
     @Transactional(readOnly = true)
-    public Page<PatientEmergencyContactDto> searchContacts(UUID patientId, String name, String relationship, String phone, Pageable pageable) {
+    public Page<PatientEmergencyContactDto> searchContacts(UUID patientId, String name, String relationship,
+            String phone, Pageable pageable) {
         // For now, implement basic search - can be enhanced with Specifications
         Page<PatientEmergencyContact> contacts = patientEmergencyContactRepository.findAll(pageable);
         return contacts.map(patientEmergencyContactMapper::patientEmergencyContactToPatientEmergencyContactDto);
@@ -171,7 +177,8 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
     // Business Operations
     @Override
     @Transactional
-    public PatientEmergencyContactDto addEmergencyContact(UUID patientId, String name, String relationship, String phone) {
+    public PatientEmergencyContactDto addEmergencyContact(UUID patientId, String name, String relationship,
+            String phone) {
         log.info("Adding emergency contact for patient ID: {}", patientId);
 
         try {
@@ -238,14 +245,12 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
         return patientEmergencyContactRepository.existsByPatientId(patientId);
     }
 
-
     // Statistics Operations
     @Override
     @Transactional(readOnly = true)
     public long countByPatientId(UUID patientId) {
         return patientEmergencyContactRepository.countByPatientId(patientId);
     }
-
 
     @Override
     @Transactional(readOnly = true)
@@ -288,7 +293,8 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
                     .map(dto -> {
                         Patient patient = patientRepository.findById(dto.getPatientId())
                                 .orElseThrow(() -> new PatientNotFoundException(dto.getPatientId()));
-                        PatientEmergencyContact contact = patientEmergencyContactMapper.patientEmergencyContactDtoToPatientEmergencyContact(dto);
+                        PatientEmergencyContact contact = patientEmergencyContactMapper
+                                .patientEmergencyContactDtoToPatientEmergencyContact(dto);
                         contact.setPatient(patient);
                         return contact;
                     })
@@ -310,7 +316,6 @@ public class PatientEmergencyContactServiceImpl implements PatientEmergencyConta
         log.info("Deleting all emergency contacts for patient ID: {}", patientId);
         patientEmergencyContactRepository.deleteByPatientId(patientId);
     }
-
 
     // Contact Management
     @Override

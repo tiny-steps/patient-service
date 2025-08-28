@@ -11,6 +11,8 @@ import com.tintsteps.patientservice.repository.PatientRepository;
 import com.tintsteps.patientservice.service.PatientMedicalHistoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -33,6 +35,7 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
 
     @Override
     @Transactional
+    @CacheEvict(value = { "patient-medical-history", "patients" }, allEntries = true)
     public PatientMedicalHistoryDto create(PatientMedicalHistoryDto patientMedicalHistoryDto) {
         log.info("Creating medical history for patient ID: {}", patientMedicalHistoryDto.getPatientId());
 
@@ -45,7 +48,8 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
             Patient patient = patientRepository.findById(patientMedicalHistoryDto.getPatientId())
                     .orElseThrow(() -> new PatientNotFoundException(patientMedicalHistoryDto.getPatientId()));
 
-            PatientMedicalHistory history = patientMedicalHistoryMapper.patientMedicalHistoryDtoToPatientMedicalHistory(patientMedicalHistoryDto);
+            PatientMedicalHistory history = patientMedicalHistoryMapper
+                    .patientMedicalHistoryDtoToPatientMedicalHistory(patientMedicalHistoryDto);
             history.setPatient(patient);
 
             // Set recorded Instant if not provided
@@ -152,7 +156,8 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
     @Override
     @Transactional(readOnly = true)
     public List<PatientMedicalHistoryDto> findByCondition(String condition) {
-        List<PatientMedicalHistory> histories = patientMedicalHistoryRepository.findByConditionContainingIgnoreCase(condition);
+        List<PatientMedicalHistory> histories = patientMedicalHistoryRepository
+                .findByConditionContainingIgnoreCase(condition);
         return histories.stream()
                 .map(patientMedicalHistoryMapper::patientMedicalHistoryToPatientMedicalHistoryDto)
                 .collect(Collectors.toList());
@@ -161,10 +166,10 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
     @Override
     @Transactional(readOnly = true)
     public Page<PatientMedicalHistoryDto> findByCondition(String condition, Pageable pageable) {
-        Page<PatientMedicalHistory> histories = patientMedicalHistoryRepository.findByConditionContainingIgnoreCase(condition, pageable);
+        Page<PatientMedicalHistory> histories = patientMedicalHistoryRepository
+                .findByConditionContainingIgnoreCase(condition, pageable);
         return histories.map(patientMedicalHistoryMapper::patientMedicalHistoryToPatientMedicalHistoryDto);
     }
-
 
     @Transactional(readOnly = true)
     public Page<PatientMedicalHistoryDto> findByPatientId(UUID patientId, Pageable pageable) {
@@ -172,11 +177,10 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
         return histories.map(patientMedicalHistoryMapper::patientMedicalHistoryToPatientMedicalHistoryDto);
     }
 
-
     @Override
     @Transactional(readOnly = true)
     public Page<PatientMedicalHistoryDto> searchMedicalHistory(UUID patientId, String condition, String notes,
-                                                              Instant startDate, Instant endDate, Pageable pageable) {
+            Instant startDate, Instant endDate, Pageable pageable) {
         // For now, implement basic search - can be enhanced with Specifications
         Page<PatientMedicalHistory> histories = patientMedicalHistoryRepository.findAll(pageable);
         return histories.map(patientMedicalHistoryMapper::patientMedicalHistoryToPatientMedicalHistoryDto);
@@ -301,7 +305,8 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
                     .map(dto -> {
                         Patient patient = patientRepository.findById(dto.getPatientId())
                                 .orElseThrow(() -> new PatientNotFoundException(dto.getPatientId()));
-                        PatientMedicalHistory history = patientMedicalHistoryMapper.patientMedicalHistoryDtoToPatientMedicalHistory(dto);
+                        PatientMedicalHistory history = patientMedicalHistoryMapper
+                                .patientMedicalHistoryDtoToPatientMedicalHistory(dto);
                         history.setPatient(patient);
                         if (history.getRecordedAt() == null) {
                             history.setRecordedAt(Instant.now());
@@ -360,7 +365,8 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
     @Transactional(readOnly = true)
     public List<PatientMedicalHistoryDto> getRecentMedicalHistory(UUID patientId, int daysBack) {
         Instant sinceDate = Instant.now().minus(Duration.ofDays(daysBack));
-        List<PatientMedicalHistory> recentHistories = patientMedicalHistoryRepository.findRecentMedicalHistory(sinceDate);
+        List<PatientMedicalHistory> recentHistories = patientMedicalHistoryRepository
+                .findRecentMedicalHistory(sinceDate);
 
         return recentHistories.stream()
                 .filter(history -> history.getPatient().getId().equals(patientId))
@@ -371,7 +377,8 @@ public class PatientMedicalHistoryServiceImpl implements PatientMedicalHistorySe
     @Override
     @Transactional(readOnly = true)
     public List<String> getChronicConditions(UUID patientId) {
-        // For now, return all conditions - could be enhanced with chronic condition logic
+        // For now, return all conditions - could be enhanced with chronic condition
+        // logic
         return getMedicalConditions(patientId);
     }
 }

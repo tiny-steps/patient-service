@@ -11,6 +11,8 @@ import com.tintsteps.patientservice.repository.PatientRepository;
 import com.tintsteps.patientservice.service.PatientInsuranceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -43,7 +45,8 @@ public class PatientInsuranceServiceImpl implements PatientInsuranceService {
             Patient patient = patientRepository.findById(patientInsuranceDto.getPatientId())
                     .orElseThrow(() -> new PatientNotFoundException(patientInsuranceDto.getPatientId()));
 
-            PatientInsurance insurance = patientInsuranceMapper.patientInsuranceDtoToPatientInsurance(patientInsuranceDto);
+            PatientInsurance insurance = patientInsuranceMapper
+                    .patientInsuranceDtoToPatientInsurance(patientInsuranceDto);
             insurance.setPatient(patient);
 
             PatientInsurance savedInsurance = patientInsuranceRepository.save(insurance);
@@ -154,13 +157,15 @@ public class PatientInsuranceServiceImpl implements PatientInsuranceService {
     @Override
     @Transactional(readOnly = true)
     public Page<PatientInsuranceDto> findByProvider(String provider, Pageable pageable) {
-        Page<PatientInsurance> insurances = patientInsuranceRepository.findByProviderContainingIgnoreCase(provider, pageable);
+        Page<PatientInsurance> insurances = patientInsuranceRepository.findByProviderContainingIgnoreCase(provider,
+                pageable);
         return insurances.map(patientInsuranceMapper::patientInsuranceToPatientInsuranceDto);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<PatientInsuranceDto> searchInsurance(UUID patientId, String provider, String policyNumber, String coverageDetails, Pageable pageable) {
+    public Page<PatientInsuranceDto> searchInsurance(UUID patientId, String provider, String policyNumber,
+            String coverageDetails, Pageable pageable) {
         // For now, implement basic search - can be enhanced with Specifications
         Page<PatientInsurance> insurances = patientInsuranceRepository.findAll(pageable);
         return insurances.map(patientInsuranceMapper::patientInsuranceToPatientInsuranceDto);
@@ -169,7 +174,8 @@ public class PatientInsuranceServiceImpl implements PatientInsuranceService {
     // Business Operations
     @Override
     @Transactional
-    public PatientInsuranceDto addInsurance(UUID patientId, String provider, String policyNumber, String coverageDetails) {
+    public PatientInsuranceDto addInsurance(UUID patientId, String provider, String policyNumber,
+            String coverageDetails) {
         log.info("Adding insurance for patient ID: {}", patientId);
 
         try {
@@ -215,7 +221,8 @@ public class PatientInsuranceServiceImpl implements PatientInsuranceService {
 
     @Override
     @Transactional
-    public PatientInsuranceDto updateInsuranceInfo(UUID id, String provider, String policyNumber, String coverageDetails) {
+    public PatientInsuranceDto updateInsuranceInfo(UUID id, String provider, String policyNumber,
+            String coverageDetails) {
         PatientInsuranceDto dto = new PatientInsuranceDto();
         dto.setProvider(provider);
         dto.setPolicyNumber(policyNumber);
@@ -234,15 +241,12 @@ public class PatientInsuranceServiceImpl implements PatientInsuranceService {
         return patientInsuranceRepository.existsByPatientId(patientId);
     }
 
-
-
     // Statistics Operations
 
     @Transactional(readOnly = true)
     public long countByPatientId(UUID patientId) {
         return patientInsuranceRepository.countByPatientId(patientId);
     }
-
 
     @Override
     @Transactional(readOnly = true)
@@ -314,7 +318,6 @@ public class PatientInsuranceServiceImpl implements PatientInsuranceService {
     public int getInsuranceCount(UUID patientId) {
         return (int) countByPatientId(patientId);
     }
-
 
     @Override
     @Transactional(readOnly = true)

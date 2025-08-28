@@ -11,6 +11,8 @@ import com.tintsteps.patientservice.repository.PatientRepository;
 import com.tintsteps.patientservice.service.PatientAllergyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -32,11 +34,11 @@ public class PatientAllergyServiceImpl implements PatientAllergyService {
 
     // Critical allergies that require special attention
     private static final List<String> CRITICAL_ALLERGENS = Arrays.asList(
-            "penicillin", "peanuts", "shellfish", "latex", "bee venom", "eggs", "milk"
-    );
+            "penicillin", "peanuts", "shellfish", "latex", "bee venom", "eggs", "milk");
 
     @Override
     @Transactional
+    @CacheEvict(value = { "patient-allergies", "patients" }, allEntries = true)
     public PatientAllergyDto create(PatientAllergyDto patientAllergyDto) {
         log.info("Creating patient allergy for patient ID: {}", patientAllergyDto.getPatientId());
 
@@ -67,6 +69,7 @@ public class PatientAllergyServiceImpl implements PatientAllergyService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "patient-allergies", key = "#id")
     public PatientAllergyDto findById(UUID id) {
         log.info("Finding patient allergy by ID: {}", id);
 
@@ -87,6 +90,7 @@ public class PatientAllergyServiceImpl implements PatientAllergyService {
 
     @Override
     @Transactional
+    @CacheEvict(value = { "patient-allergies", "patients" }, key = "#id")
     public PatientAllergyDto update(UUID id, PatientAllergyDto patientAllergyDto) {
         log.info("Updating patient allergy with ID: {}", id);
 
@@ -142,6 +146,7 @@ public class PatientAllergyServiceImpl implements PatientAllergyService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "patient-allergies", key = "'patient-' + #patientId")
     public List<PatientAllergyDto> findByPatientId(UUID patientId) {
         log.info("Finding allergies for patient ID: {}", patientId);
 
@@ -176,13 +181,14 @@ public class PatientAllergyServiceImpl implements PatientAllergyService {
     public Page<PatientAllergyDto> findByAllergen(String allergen, Pageable pageable) {
         log.info("Finding allergies by allergen: {} with pagination", allergen);
 
-        Page<PatientAllergy> allergies = patientAllergyRepository.findByAllergenContainingIgnoreCase(allergen, pageable);
+        Page<PatientAllergy> allergies = patientAllergyRepository.findByAllergenContainingIgnoreCase(allergen,
+                pageable);
         return allergies.map(patientAllergyMapper::patientAllergyToPatientAllergyDto);
     }
 
-
     @Override
     @Transactional
+    @CacheEvict(value = { "patient-allergies", "patients" }, allEntries = true)
     public PatientAllergyDto addAllergy(UUID patientId, String allergen, String reaction) {
         log.info("Adding allergy for patient ID: {}, allergen: {}", patientId, allergen);
 
@@ -208,11 +214,13 @@ public class PatientAllergyServiceImpl implements PatientAllergyService {
 
     @Override
     @Transactional
+    @CacheEvict(value = { "patient-allergies", "patients" }, allEntries = true)
     public void removeAllergy(UUID patientId, String allergen) {
         log.info("Removing allergy for patient ID: {}, allergen: {}", patientId, allergen);
 
         try {
-            List<PatientAllergy> allergies = patientAllergyRepository.findByPatientIdAndAllergenContainingIgnoreCase(patientId, allergen);
+            List<PatientAllergy> allergies = patientAllergyRepository
+                    .findByPatientIdAndAllergenContainingIgnoreCase(patientId, allergen);
             if (!allergies.isEmpty()) {
                 patientAllergyRepository.deleteAll(allergies);
                 log.info("Removed {} allergy records for patient ID: {}", allergies.size(), patientId);
@@ -222,7 +230,6 @@ public class PatientAllergyServiceImpl implements PatientAllergyService {
             throw new PatientServiceException("Failed to remove allergy", e);
         }
     }
-
 
     @Override
     @Transactional(readOnly = true)
@@ -242,13 +249,11 @@ public class PatientAllergyServiceImpl implements PatientAllergyService {
         return patientAllergyRepository.existsByPatientId(patientId);
     }
 
-
     @Override
     @Transactional(readOnly = true)
     public long countByPatientId(UUID patientId) {
         return patientAllergyRepository.countByPatientId(patientId);
     }
-
 
     @Override
     @Transactional(readOnly = true)

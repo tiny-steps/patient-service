@@ -11,6 +11,8 @@ import com.tintsteps.patientservice.repository.PatientRepository;
 import com.tintsteps.patientservice.service.PatientAddressService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -165,7 +167,6 @@ public class PatientAddressServiceImpl implements PatientAddressService {
         return addresses.map(patientAddressMapper::patientAddressToPatientAddressDto);
     }
 
-
     @Override
     @Transactional(readOnly = true)
     public Page<PatientAddressDto> searchAddresses(UUID patientId, UUID addressId, Pageable pageable) {
@@ -254,7 +255,6 @@ public class PatientAddressServiceImpl implements PatientAddressService {
     public long countByPatientId(UUID patientId) {
         return patientAddressRepository.countByPatientId(patientId);
     }
-
 
     @Override
     @Transactional(readOnly = true)

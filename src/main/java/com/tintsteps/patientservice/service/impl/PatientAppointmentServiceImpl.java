@@ -11,6 +11,8 @@ import com.tintsteps.patientservice.repository.PatientRepository;
 import com.tintsteps.patientservice.service.PatientAppointmentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -48,11 +50,13 @@ public class PatientAppointmentServiceImpl implements PatientAppointmentService 
                     .orElseThrow(() -> new PatientNotFoundException(patientAppointmentDto.getPatientId()));
 
             // Check if link already exists
-            if (existsByPatientIdAndAppointmentId(patientAppointmentDto.getPatientId(), patientAppointmentDto.getAppointmentId())) {
+            if (existsByPatientIdAndAppointmentId(patientAppointmentDto.getPatientId(),
+                    patientAppointmentDto.getAppointmentId())) {
                 throw new PatientServiceException("Patient is already linked to this appointment");
             }
 
-            PatientAppointment patientAppointment = patientAppointmentMapper.patientAppointmentDtoToPatientAppointment(patientAppointmentDto);
+            PatientAppointment patientAppointment = patientAppointmentMapper
+                    .patientAppointmentDtoToPatientAppointment(patientAppointmentDto);
             patientAppointment.setPatient(patient);
 
             PatientAppointment savedAppointment = patientAppointmentRepository.save(patientAppointment);
@@ -165,7 +169,6 @@ public class PatientAppointmentServiceImpl implements PatientAppointmentService 
         return appointments.map(patientAppointmentMapper::patientAppointmentToPatientAppointmentDto);
     }
 
-
     @Override
     @Transactional(readOnly = true)
     public Page<PatientAppointmentDto> searchAppointments(UUID patientId, UUID appointmentId, Pageable pageable) {
@@ -217,7 +220,6 @@ public class PatientAppointmentServiceImpl implements PatientAppointmentService 
         }
     }
 
-
     @Override
     @Transactional(readOnly = true)
     public PatientAppointmentDto getPatientForAppointment(UUID appointmentId) {
@@ -244,7 +246,6 @@ public class PatientAppointmentServiceImpl implements PatientAppointmentService 
         return patientAppointmentRepository.existsByPatientId(patientId);
     }
 
-
     @Transactional(readOnly = true)
     @Override
     public boolean existsByPatientIdAndAppointmentId(UUID patientId, UUID appointmentId) {
@@ -257,7 +258,6 @@ public class PatientAppointmentServiceImpl implements PatientAppointmentService 
     public long countByPatientId(UUID patientId) {
         return patientAppointmentRepository.countByPatientId(patientId);
     }
-
 
     @Override
     @Transactional(readOnly = true)
@@ -306,7 +306,8 @@ public class PatientAppointmentServiceImpl implements PatientAppointmentService 
                     .map(dto -> {
                         Patient patient = patientRepository.findById(dto.getPatientId())
                                 .orElseThrow(() -> new PatientNotFoundException(dto.getPatientId()));
-                        PatientAppointment appointment = patientAppointmentMapper.patientAppointmentDtoToPatientAppointment(dto);
+                        PatientAppointment appointment = patientAppointmentMapper
+                                .patientAppointmentDtoToPatientAppointment(dto);
                         appointment.setPatient(patient);
                         return appointment;
                     })
@@ -349,7 +350,6 @@ public class PatientAppointmentServiceImpl implements PatientAppointmentService 
     public int getAppointmentCount(UUID patientId) {
         return (int) countByPatientId(patientId);
     }
-
 
     @Transactional(readOnly = true)
     @Override
