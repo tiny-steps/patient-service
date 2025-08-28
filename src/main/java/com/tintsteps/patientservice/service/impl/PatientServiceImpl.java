@@ -497,7 +497,7 @@ public class PatientServiceImpl implements PatientService {
 
             // Step 2: Create patient with the returned user ID
             PatientDto patientDto = new PatientDto();
-            patientDto.setId(userId);
+            patientDto.setUserId(userId);
             patientDto.setDateOfBirth(registrationDto.getDateOfBirth());
             patientDto.setGender(registrationDto.getGender());
             patientDto.setBloodGroup(registrationDto.getBloodGroup());

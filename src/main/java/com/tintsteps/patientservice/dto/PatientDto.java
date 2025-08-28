@@ -10,6 +10,7 @@ import java.util.UUID;
 @Data
 public class PatientDto {
     private UUID id;
+    private UUID userId;
     private Date dateOfBirth;
     private Gender gender;
     private String bloodGroup;
