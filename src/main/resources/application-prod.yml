@@ -1,0 +1,43 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: ts-patient-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://tinystepscdc.com/auth
+  datasource:
+    url: jdbc:postgresql://postgres-service:5432/patients?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    username: postgres
+    password: root
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        use_sql_comments: false
+        jdbc:
+          lob:
+            non_contextual_creation: true
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+
+# Eureka client configuration
+eureka:
+  instance:
+    prefer-ip-address: true
+    hostname: ts-patient-service
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://ts-service-registry:8761/eureka/
