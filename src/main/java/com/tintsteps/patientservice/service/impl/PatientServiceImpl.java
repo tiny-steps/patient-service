@@ -7,7 +7,7 @@ import com.tintsteps.patientservice.exception.PatientNotFoundException;
 import com.tintsteps.patientservice.exception.PatientServiceException;
 import com.tintsteps.patientservice.integration.AuthServiceIntegration;
 import com.tintsteps.patientservice.integration.UserServiceIntegration;
-import com.tintsteps.patientservice.integration.dto.UserDto;
+
 import com.tintsteps.patientservice.integration.model.UserModel;
 import com.tintsteps.patientservice.integration.model.UserUpdateRequest;
 import com.tintsteps.patientservice.mapper.PatientMapper;
@@ -114,30 +114,8 @@ public class PatientServiceImpl implements PatientService {
             Patient existingPatient = patientRepository.findById(id)
                     .orElseThrow(() -> new PatientNotFoundException(id));
 
-            // Store original values for comparison
-            UUID originalUserId = existingPatient.getUserId();
-
-            // Get current user information for comparison
-            String originalName = null;
-            String originalEmail = null;
-            String originalPhone = null;
-            String originalAvatar = null;
-            String originalStatus = null;
-
-            if (existingPatient.getUserId() != null) {
-                try {
-                    var currentUser = userServiceIntegration.getUserByIdReactive(existingPatient.getUserId()).block();
-                    if (currentUser != null) {
-                        originalName = currentUser.getFirstName() + " " + currentUser.getLastName();
-                        originalEmail = currentUser.getEmail();
-                        originalPhone = currentUser.getPhoneNumber();
-                        originalAvatar = null; // UserDto doesn't have avatar field
-                        originalStatus = currentUser.isActive() ? "ACTIVE" : "INACTIVE";
-                    }
-                } catch (Exception e) {
-                    log.warn("Could not fetch current user information for comparison: {}", e.getMessage());
-                }
-            }
+            // Patient updates don't require user service integration since
+            // patient entity only contains medical/personal data, not user account data
 
             // Update patient entity fields
             if (patientDto.getDateOfBirth() != null) {
@@ -158,29 +136,23 @@ public class PatientServiceImpl implements PatientService {
 
             Patient updatedPatient = patientRepository.save(existingPatient);
 
-            // Update user information if patient has a userId
+            // Update user information if patient has a userId and there are user-related
+            // changes
             if (existingPatient.getUserId() != null) {
                 try {
-                    log.info("Updating user information for patient ID: {} with userId: {}", id,
-                            existingPatient.getUserId());
+                    // For patients, we don't typically update user information since patient entity
+                    // doesn't store user-related fields like name, email, phone, avatar, status.
+                    // These are managed separately through user service endpoints.
+                    // Only update if there were specific user-related changes requested.
 
-                    // Update user in user service with current values
-                    UserUpdateRequest userUpdateRequest = UserUpdateRequest.builder()
-                            .name(originalName) // Keep current name since patient entity doesn't store it
-                            .email(originalEmail) // Keep current email
-                            .phone(originalPhone) // Keep current phone
-                            .avatar(originalAvatar) // Keep current avatar
-                            .status(originalStatus) // Keep current status
-                            .build();
+                    // Check if any user-related fields were provided in the update request
+                    // Since PatientDto doesn't contain user fields, we skip user service update
+                    // unless specifically needed for email/phone updates (handled by separate
+                    // methods)
 
-                    userServiceIntegration.updateUser(existingPatient.getUserId(), userUpdateRequest)
-                            .doOnSuccess(
-                                    user -> log.info("Successfully updated user information for patient ID: {}", id))
-                            .doOnError(error -> log.error("Failed to update user information for patient ID: {}", id,
-                                    error))
-                            .subscribe();
+                    log.debug("Patient update completed for ID: {} - no user service update needed", id);
                 } catch (Exception e) {
-                    log.error("Error updating user information for patient ID: {}", id, e);
+                    log.error("Error during user information check for patient ID: {}", id, e);
                     // Don't fail the patient update if user update fails
                 }
             }
@@ -237,16 +209,16 @@ public class PatientServiceImpl implements PatientService {
                             .subscribe();
 
                     // Delete from user-service
-                    userServiceIntegration.deleteUser(userId)
-                            .doOnSuccess(
-                                    result -> log.info("Successfully deleted user from user-service with ID: {}",
-                                            userId))
-                            .doOnError(error -> log.error("Failed to delete user from user-service with ID: {}", userId,
-                                    error))
-                            .subscribe();
+                    // userServiceIntegration.deleteUser(userId)
+                    // .doOnSuccess(
+                    // result -> log.info("Successfully deleted user from user-service with ID: {}",
+                    // userId))
+                    // .doOnError(error -> log.error("Failed to delete user from user-service with
+                    // ID: {}", userId,
+                    // error))
+                    // .subscribe();
 
-                    log.info("User deletion requests sent to both auth-service and user-service for user ID: {}",
-                            userId);
+                    log.info("User deletion request sent to auth-service for user ID: {}", userId);
 
                 } catch (Exception e) {
                     log.error("Error during user deletion process for user ID: {}", userId, e);
