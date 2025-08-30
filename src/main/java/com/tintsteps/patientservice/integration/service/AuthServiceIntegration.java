@@ -1,7 +1,8 @@
-package com.tintsteps.patientservice.integration;
+package com.tintsteps.patientservice.integration.service;
 
 import com.tintsteps.patientservice.dto.UserRegistrationRequest;
 import com.tintsteps.patientservice.integration.model.UserModel;
+import com.tintsteps.patientservice.model.ResponseModel;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.reactor.circuitbreaker.operator.CircuitBreakerOperator;
 import io.github.resilience4j.reactor.retry.RetryOperator;
@@ -17,25 +18,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.time.Duration;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceIntegration {
 
     private final WebClient publicWebClient;
-    private final WebClient secureWebClient;
     private final io.github.resilience4j.retry.Retry authServiceRetry;
     private final io.github.resilience4j.circuitbreaker.CircuitBreaker authServiceCircuitBreaker;
     private final io.github.resilience4j.timelimiter.TimeLimiter authServiceTimeLimiter;
+    private final WebClient secureWebClient;
 
     @Value("${services.auth-service.base-url:http://ts-auth-service}")
     private String authServiceBaseUrl;
 
-    @CircuitBreaker(name = "ts-auth-service", fallbackMethod = "registerUserFallback")
-    @Retry(name = "ts-auth-service")
-    @TimeLimiter(name = "ts-auth-service")
+    @CircuitBreaker(name = "auth-service", fallbackMethod = "registerUserFallback")
+    @Retry(name = "auth-service")
+    @TimeLimiter(name = "auth-service")
     public Mono<UserModel> registerUser(UserRegistrationRequest registrationRequest) {
         log.info("Registering user via auth-service with email: {}", registrationRequest.getEmail());
 
@@ -43,21 +42,19 @@ public class AuthServiceIntegration {
                 .uri(authServiceBaseUrl + "/api/auth/register")
                 .bodyValue(registrationRequest)
                 .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<AuthServiceResponseModel<UserModel>>() {
+                .bodyToMono(new ParameterizedTypeReference<ResponseModel<UserModel>>() {
                 })
-                .map(AuthServiceResponseModel::data)
+                .map(ResponseModel::getData)
                 .transformDeferred(RetryOperator.of(authServiceRetry))
                 .transformDeferred(CircuitBreakerOperator.of(authServiceCircuitBreaker))
                 .transformDeferred(TimeLimiterOperator.of(authServiceTimeLimiter))
-                .timeout(Duration.ofSeconds(10))
                 .onErrorMap(throwable -> new AuthenticationServiceException("Auth service is unavailable", throwable));
     }
 
     // Fallback method
-    public Mono<UserModel> registerUserFallback(UserRegistrationRequest registrationRequest, Throwable t) {
-        log.error("Auth service fallback triggered for registerUser: {}, error: {}", registrationRequest.getEmail(),
-                t.getMessage());
-        return Mono.error(new RuntimeException("User registration failed - auth service unavailable", t));
+    public Mono<UserModel> registerUserFallback(UserRegistrationRequest request, Throwable t) {
+        log.warn("Fallback for registerUser: {}", request.getEmail(), t);
+        return Mono.error(new RuntimeException("User registration failed", t));
     }
 
     /**

@@ -2,13 +2,20 @@ package com.tintsteps.patientservice.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+
+import java.util.Collection;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -43,12 +50,21 @@ public class SecurityConfig {
      */
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        grantedAuthoritiesConverter.setAuthoritiesClaimName("role");
-        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+        JwtGrantedAuthoritiesConverter defaultConverter = new JwtGrantedAuthoritiesConverter();
+        defaultConverter.setAuthoritiesClaimName("role");
+        defaultConverter.setAuthorityPrefix("ROLE_");
+
+        Converter<Jwt, Collection<GrantedAuthority>> authoritiesConverter = jwt -> {
+            Object roleClaim = jwt.getClaims().get("role");
+            if (roleClaim instanceof String s && !s.isEmpty()) {
+                return List.of(new SimpleGrantedAuthority("ROLE_" + s));
+            }
+            return defaultConverter.convert(jwt);
+        };
 
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
-        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
+        jwtAuthenticationConverter.setPrincipalClaimName("id");
         return jwtAuthenticationConverter;
     }
 }

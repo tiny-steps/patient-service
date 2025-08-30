@@ -5,11 +5,11 @@ import com.tintsteps.patientservice.dto.PatientRegistrationDto;
 import com.tintsteps.patientservice.dto.UserRegistrationRequest;
 import com.tintsteps.patientservice.exception.PatientNotFoundException;
 import com.tintsteps.patientservice.exception.PatientServiceException;
-import com.tintsteps.patientservice.integration.AuthServiceIntegration;
-import com.tintsteps.patientservice.integration.UserServiceIntegration;
 
 import com.tintsteps.patientservice.integration.model.UserModel;
 import com.tintsteps.patientservice.integration.model.UserUpdateRequest;
+import com.tintsteps.patientservice.integration.service.AuthServiceIntegration;
+import com.tintsteps.patientservice.integration.service.UserIntegrationService;
 import com.tintsteps.patientservice.mapper.PatientMapper;
 import com.tintsteps.patientservice.model.Gender;
 import com.tintsteps.patientservice.model.Patient;
@@ -43,7 +43,7 @@ public class PatientServiceImpl implements PatientService {
     private final PatientRepository patientRepository;
     private final PatientMapper patientMapper = PatientMapper.INSTANCE;
     private final AuthServiceIntegration authServiceIntegration;
-    private final UserServiceIntegration userServiceIntegration;
+    private final UserIntegrationService userServiceIntegration;
 
     @Override
     @Transactional
@@ -136,24 +136,59 @@ public class PatientServiceImpl implements PatientService {
 
             Patient updatedPatient = patientRepository.save(existingPatient);
 
+            // Get current user information for comparison
+            String originalEmail = null;
+            String originalPhone = null;
+            String originalName = null;
+            if (existingPatient.getUserId() != null) {
+                try {
+                    var currentUser = userServiceIntegration.getUserById(existingPatient.getUserId()).block();
+                    if (currentUser != null) {
+                        originalEmail = currentUser.email();
+                        originalPhone = currentUser.phone();
+                        originalName = currentUser.name();
+                    }
+                } catch (Exception e) {
+                    log.warn("Could not fetch current user information for comparison: {}", e.getMessage());
+                }
+            }
+
             // Update user information if patient has a userId and there are user-related
             // changes
             if (existingPatient.getUserId() != null) {
                 try {
-                    // For patients, we don't typically update user information since patient entity
-                    // doesn't store user-related fields like name, email, phone, avatar, status.
-                    // These are managed separately through user service endpoints.
-                    // Only update if there were specific user-related changes requested.
+                    // Check if any user-related fields have changed
+                    boolean nameChanged = !originalName.equals(patientDto.getName());
+                    boolean emailChaned = !originalEmail.equals(patientDto.getEmail());
+                    boolean phoneChanged = !originalPhone.equals(patientDto.getPhone());
 
-                    // Check if any user-related fields were provided in the update request
-                    // Since PatientDto doesn't contain user fields, we skip user service update
-                    // unless specifically needed for email/phone updates (handled by separate
-                    // methods)
 
-                    log.debug("Patient update completed for ID: {} - no user service update needed", id);
+                    // For email and phone, we need to get them from the request or user service
+                    // Since Doctor entity doesn't store email/phone, we'll update user service with
+                    // current values
+                    boolean shouldUpdateUser = nameChanged || emailChaned || phoneChanged;
+
+                    if (shouldUpdateUser) {
+                        log.info("Updating user information for doctor ID: {} with userId: {}", id,
+                                existingPatient.getUserId());
+
+                        // Update user in user service with current values
+                        UserUpdateRequest userUpdateRequest = UserUpdateRequest.builder()
+                                .name(patientDto.getName())
+                                .email(originalEmail) // Keep current email
+                                .phone(originalPhone) // Keep current phone
+                                .build();
+
+                        userServiceIntegration.updateUser(existingPatient.getUserId(), userUpdateRequest)
+                                .doOnSuccess(
+                                        user -> log.info("Successfully updated user information for doctor ID: {}", id))
+                                .doOnError(error -> log.error("Failed to update user information for doctor ID: {}", id,
+                                        error))
+                                .subscribe();
+                    }
                 } catch (Exception e) {
-                    log.error("Error during user information check for patient ID: {}", id, e);
-                    // Don't fail the patient update if user update fails
+                    log.error("Error updating user information for doctor ID: {}", id, e);
+                    // Don't fail the doctor update if user update fails
                 }
             }
 

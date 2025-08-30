@@ -16,4 +16,7 @@ public class PatientDto {
     private String bloodGroup;
     private Integer heightCm;
     private BigDecimal weightKg;
+    private String name;
+    private String email;
+    private String phone;
 }

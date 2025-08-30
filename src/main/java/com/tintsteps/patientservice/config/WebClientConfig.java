@@ -1,5 +1,8 @@
-package com.tintsteps.patientservice.config;
+package com.tintsteps.patientservice.config; // Or your equivalent package
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,16 +15,21 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Configuration
 public class WebClientConfig {
 
+    private static final Logger logger = LoggerFactory.getLogger(WebClientConfig.class);
+
+    @Value("${internal.api.secret}")
+    private String internalApiSecret;
+
     @Bean
     @LoadBalanced
     public WebClient.Builder loadBalancedWebClientBuilder() {
-        return WebClient.builder();
+        return WebClient.builder()
+                // The key fix: Add the secret to the base builder
+                .defaultHeader("X-Internal-Secret", internalApiSecret)
+                // Add a filter to log outgoing request headers for debugging
+                .filter(logRequestHeaders());
     }
 
-    /**
-     * A WebClient for calling public, unsecured endpoints.
-     * It uses the load-balanced builder but adds no authentication.
-     */
     @Bean
     public WebClient publicWebClient(WebClient.Builder loadBalancedWebClientBuilder) {
         return loadBalancedWebClientBuilder.build();
@@ -57,5 +65,24 @@ public class WebClientConfig {
                     return next.exchange(request);
                 })
                 .switchIfEmpty(next.exchange(request));
+    }
+
+    /**
+     * This logging filter will print the headers of every outgoing request
+     * made by any WebClient created from the builder.
+     */
+    private ExchangeFilterFunction logRequestHeaders() {
+        return (clientRequest, next) -> {
+            logger.info("================ Outgoing Request from Doctor-Service ================");
+            logger.info("Request: {} {}", clientRequest.method(), clientRequest.url());
+            clientRequest.headers().forEach((name, values) ->
+                    values.forEach(value -> {
+                        String toLog = "X-Internal-Secret".equalsIgnoreCase(name) ? "[MASKED]" : value;
+                        logger.info("Header: {}={}", name, toLog);
+                    })
+            );
+            logger.info("======================================================================");
+            return next.exchange(clientRequest);
+        };
     }
 }
