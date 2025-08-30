@@ -32,9 +32,9 @@ public class AuthServiceIntegration {
     @Value("${services.auth-service.base-url:http://ts-auth-service}")
     private String authServiceBaseUrl;
 
-    @CircuitBreaker(name = "auth-service", fallbackMethod = "registerUserFallback")
-    @Retry(name = "auth-service")
-    @TimeLimiter(name = "auth-service")
+    @CircuitBreaker(name = "ts-auth-service", fallbackMethod = "registerUserFallback")
+    @Retry(name = "ts-auth-service")
+    @TimeLimiter(name = "ts-auth-service")
     public Mono<UserModel> registerUser(UserRegistrationRequest registrationRequest) {
         log.info("Registering user via auth-service with email: {}", registrationRequest.getEmail());
 
@@ -64,6 +64,9 @@ public class AuthServiceIntegration {
      * @param email  the new email
      * @return success response
      */
+    @CircuitBreaker(name = "ts-auth-service", fallbackMethod = "registerUserFallback")
+    @Retry(name = "ts-auth-service")
+    @TimeLimiter(name = "ts-auth-service")
     public Mono<Void> updateUserEmail(String userId, String email) {
         log.info("Updating user email in auth service for user ID: {} to email: {}", userId, email);
 
@@ -89,6 +92,9 @@ public class AuthServiceIntegration {
      * @param userId the user ID to delete
      * @return void - the delete operation completes successfully
      */
+    @CircuitBreaker(name = "ts-auth-service", fallbackMethod = "registerUserFallback")
+    @Retry(name = "ts-auth-service")
+    @TimeLimiter(name = "ts-auth-service")
     public Mono<Void> deleteUser(String userId) {
         log.info("Deleting user from auth service with user ID: {}", userId);
 
