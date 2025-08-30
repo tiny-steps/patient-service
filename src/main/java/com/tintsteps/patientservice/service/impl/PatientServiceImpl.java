@@ -6,7 +6,10 @@ import com.tintsteps.patientservice.dto.UserRegistrationRequest;
 import com.tintsteps.patientservice.exception.PatientNotFoundException;
 import com.tintsteps.patientservice.exception.PatientServiceException;
 import com.tintsteps.patientservice.integration.AuthServiceIntegration;
+import com.tintsteps.patientservice.integration.UserServiceIntegration;
+import com.tintsteps.patientservice.integration.dto.UserDto;
 import com.tintsteps.patientservice.integration.model.UserModel;
+import com.tintsteps.patientservice.integration.model.UserUpdateRequest;
 import com.tintsteps.patientservice.mapper.PatientMapper;
 import com.tintsteps.patientservice.model.Gender;
 import com.tintsteps.patientservice.model.Patient;
@@ -40,6 +43,7 @@ public class PatientServiceImpl implements PatientService {
     private final PatientRepository patientRepository;
     private final PatientMapper patientMapper = PatientMapper.INSTANCE;
     private final AuthServiceIntegration authServiceIntegration;
+    private final UserServiceIntegration userServiceIntegration;
 
     @Override
     @Transactional
@@ -110,7 +114,32 @@ public class PatientServiceImpl implements PatientService {
             Patient existingPatient = patientRepository.findById(id)
                     .orElseThrow(() -> new PatientNotFoundException(id));
 
-            // Update fields
+            // Store original values for comparison
+            UUID originalUserId = existingPatient.getUserId();
+
+            // Get current user information for comparison
+            String originalName = null;
+            String originalEmail = null;
+            String originalPhone = null;
+            String originalAvatar = null;
+            String originalStatus = null;
+
+            if (existingPatient.getUserId() != null) {
+                try {
+                    var currentUser = userServiceIntegration.getUserByIdReactive(existingPatient.getUserId()).block();
+                    if (currentUser != null) {
+                        originalName = currentUser.getFirstName() + " " + currentUser.getLastName();
+                        originalEmail = currentUser.getEmail();
+                        originalPhone = currentUser.getPhoneNumber();
+                        originalAvatar = null; // UserDto doesn't have avatar field
+                        originalStatus = currentUser.isActive() ? "ACTIVE" : "INACTIVE";
+                    }
+                } catch (Exception e) {
+                    log.warn("Could not fetch current user information for comparison: {}", e.getMessage());
+                }
+            }
+
+            // Update patient entity fields
             if (patientDto.getDateOfBirth() != null) {
                 existingPatient.setDateOfBirth(patientDto.getDateOfBirth());
             }
@@ -128,6 +157,33 @@ public class PatientServiceImpl implements PatientService {
             }
 
             Patient updatedPatient = patientRepository.save(existingPatient);
+
+            // Update user information if patient has a userId
+            if (existingPatient.getUserId() != null) {
+                try {
+                    log.info("Updating user information for patient ID: {} with userId: {}", id,
+                            existingPatient.getUserId());
+
+                    // Update user in user service with current values
+                    UserUpdateRequest userUpdateRequest = UserUpdateRequest.builder()
+                            .name(originalName) // Keep current name since patient entity doesn't store it
+                            .email(originalEmail) // Keep current email
+                            .phone(originalPhone) // Keep current phone
+                            .avatar(originalAvatar) // Keep current avatar
+                            .status(originalStatus) // Keep current status
+                            .build();
+
+                    userServiceIntegration.updateUser(existingPatient.getUserId(), userUpdateRequest)
+                            .doOnSuccess(
+                                    user -> log.info("Successfully updated user information for patient ID: {}", id))
+                            .doOnError(error -> log.error("Failed to update user information for patient ID: {}", id,
+                                    error))
+                            .subscribe();
+                } catch (Exception e) {
+                    log.error("Error updating user information for patient ID: {}", id, e);
+                    // Don't fail the patient update if user update fails
+                }
+            }
 
             log.info("Patient updated successfully with ID: {}", updatedPatient.getId());
             return patientMapper.patientToPatientDto(updatedPatient);
@@ -150,15 +206,59 @@ public class PatientServiceImpl implements PatientService {
     @Transactional
     @CacheEvict(value = "patients", key = "#id")
     public void delete(UUID id) {
-        log.info("Deleting patient with ID: {}", id);
+        log.info("Starting deletion process for patient with ID: {}", id);
 
         try {
-            if (!existsById(id)) {
-                throw new PatientNotFoundException(id);
+            // Find the patient first to get the userId
+            var patient = patientRepository.findById(id)
+                    .orElseThrow(() -> new PatientNotFoundException(id));
+
+            UUID userId = patient.getUserId();
+            log.info("Found patient with ID: {} and userId: {}", id, userId);
+
+            // Step 1: Delete the patient record first
+            log.info("Step 1: Deleting patient record with ID: {}", id);
+            patientRepository.deleteById(id);
+            log.info("Successfully deleted patient record with ID: {}", id);
+
+            // Step 2: Delete the user from both auth-service and user-service if userId
+            // exists
+            if (userId != null) {
+                log.info("Step 2: Deleting user with ID: {} from auth-service and user-service", userId);
+
+                try {
+                    // Delete from auth-service
+                    authServiceIntegration.deleteUser(userId.toString())
+                            .doOnSuccess(
+                                    result -> log.info("Successfully deleted user from auth-service with ID: {}",
+                                            userId))
+                            .doOnError(error -> log.error("Failed to delete user from auth-service with ID: {}", userId,
+                                    error))
+                            .subscribe();
+
+                    // Delete from user-service
+                    userServiceIntegration.deleteUser(userId)
+                            .doOnSuccess(
+                                    result -> log.info("Successfully deleted user from user-service with ID: {}",
+                                            userId))
+                            .doOnError(error -> log.error("Failed to delete user from user-service with ID: {}", userId,
+                                    error))
+                            .subscribe();
+
+                    log.info("User deletion requests sent to both auth-service and user-service for user ID: {}",
+                            userId);
+
+                } catch (Exception e) {
+                    log.error("Error during user deletion process for user ID: {}", userId, e);
+                    // Don't fail the patient deletion if user deletion fails
+                    // The user deletion is asynchronous and will be handled by the respective
+                    // services
+                }
+            } else {
+                log.info("No userId associated with patient ID: {}, skipping user deletion", id);
             }
 
-            patientRepository.deleteById(id);
-            log.info("Patient deleted successfully with ID: {}", id);
+            log.info("Completed deletion process for patient with ID: {}", id);
         } catch (PatientNotFoundException e) {
             throw e;
         } catch (Exception e) {
@@ -468,6 +568,55 @@ public class PatientServiceImpl implements PatientService {
     public Page<PatientDto> findByAgeBetween(Integer minAge, Integer maxAge, Pageable pageable) {
         Page<Patient> patients = patientRepository.findByAgeBetween(minAge, maxAge, pageable);
         return patients.map(patientMapper::patientToPatientDto);
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = "patients", key = "#id")
+    public PatientDto updateEmail(UUID id, String newEmail) {
+        log.info("Updating email for patient ID: {} to: {}", id, newEmail);
+
+        try {
+            Patient existingPatient = patientRepository.findById(id)
+                    .orElseThrow(() -> new PatientNotFoundException(id));
+
+            if (existingPatient.getUserId() == null) {
+                throw new PatientServiceException("Patient does not have an associated user ID");
+            }
+
+            // Update email in auth service
+            authServiceIntegration.updateUserEmail(existingPatient.getUserId().toString(), newEmail)
+                    .doOnSuccess(
+                            result -> log.info("Successfully updated email in auth service for patient ID: {}", id))
+                    .doOnError(
+                            error -> log.error("Failed to update email in auth service for patient ID: {}", id, error))
+                    .subscribe();
+
+            // Update email in user service
+            UserUpdateRequest userUpdateRequest = UserUpdateRequest.builder()
+                    .name(null) // Keep current name
+                    .email(newEmail)
+                    .phone(null) // Keep current phone
+                    .avatar(null) // Keep current avatar
+                    .status(null) // Keep current status
+                    .build();
+
+            userServiceIntegration.updateUser(existingPatient.getUserId(), userUpdateRequest)
+                    .doOnSuccess(
+                            result -> log.info("Successfully updated email in user service for patient ID: {}", id))
+                    .doOnError(
+                            error -> log.error("Failed to update email in user service for patient ID: {}", id, error))
+                    .subscribe();
+
+            log.info("Email update requests sent to both auth-service and user-service for patient ID: {}", id);
+            return patientMapper.patientToPatientDto(existingPatient);
+
+        } catch (PatientNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error updating email for patient ID: {}", id, e);
+            throw new PatientServiceException("Failed to update email", e);
+        }
     }
 
     @Override

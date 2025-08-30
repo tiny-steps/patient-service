@@ -51,6 +51,11 @@ services:
   schedule-service:
     base-url: http://ts-schedule-service
 
+# Integration base URLs (used by integration services)
+integration:
+  user-service:
+    base-url: http://ts-user-service/api/v1/users
+
 # Resilience4j Configuration
 resilience4j:
   circuitbreaker:

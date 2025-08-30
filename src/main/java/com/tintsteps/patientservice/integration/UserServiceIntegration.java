@@ -1,12 +1,17 @@
 package com.tintsteps.patientservice.integration;
 
 import com.tintsteps.patientservice.integration.dto.UserDto;
+import com.tintsteps.patientservice.integration.model.UserUpdateRequest;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.reactor.circuitbreaker.operator.CircuitBreakerOperator;
+import io.github.resilience4j.reactor.retry.RetryOperator;
+import io.github.resilience4j.reactor.timelimiter.TimeLimiterOperator;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -22,9 +27,16 @@ import java.util.concurrent.CompletableFuture;
 public class UserServiceIntegration {
 
     private final WebClient.Builder webClientBuilder;
+    private final WebClient secureWebClient;
+    private final io.github.resilience4j.retry.Retry userServiceRetry;
+    private final io.github.resilience4j.circuitbreaker.CircuitBreaker userServiceCircuitBreaker;
+    private final io.github.resilience4j.timelimiter.TimeLimiter userServiceTimeLimiter;
 
     @Value("${services.user-service.base-url:http://ts-user-service}")
     private String userServiceBaseUrl;
+
+    @Value("${integration.user-service.base-url:http://ts-user-service/api/v1/users}")
+    private String userServiceApiUrl;
 
     @CircuitBreaker(name = "ts-user-service", fallbackMethod = "getUserFallback")
     @Retry(name = "ts-user-service")
@@ -87,6 +99,82 @@ public class UserServiceIntegration {
                 .toFuture();
     }
 
+    /**
+     * Retrieves user information by ID (reactive version)
+     *
+     * @param userId the user ID
+     * @return user information
+     */
+    public Mono<UserDto> getUserByIdReactive(UUID userId) {
+        log.debug("Fetching user information for ID: {}", userId);
+
+        return secureWebClient.get()
+                .uri(userServiceApiUrl + "/{id}", userId)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<ResponseModel<UserDto>>() {
+                })
+                .map(ResponseModel::data)
+                .transformDeferred(RetryOperator.of(userServiceRetry))
+                .transformDeferred(CircuitBreakerOperator.of(userServiceCircuitBreaker))
+                .transformDeferred(TimeLimiterOperator.of(userServiceTimeLimiter))
+                .doOnSuccess(user -> log.debug("Successfully fetched user information for ID: {}", userId))
+                .onErrorMap(throwable -> {
+                    log.error("Failed to fetch user with ID: {}", userId, throwable);
+                    return new IntegrationException("User Service",
+                            "Failed to fetch user information: " + throwable.getMessage(), throwable);
+                });
+    }
+
+    /**
+     * Updates user information
+     *
+     * @param userId            the user ID to update
+     * @param userUpdateRequest the user update request
+     * @return void - the update operation completes successfully
+     */
+    public Mono<Void> updateUser(UUID userId, UserUpdateRequest userUpdateRequest) {
+        log.info("Updating user information for ID: {} with request: {}", userId, userUpdateRequest);
+
+        return secureWebClient.patch()
+                .uri(userServiceApiUrl + "/{id}", userId)
+                .bodyValue(userUpdateRequest)
+                .retrieve()
+                .bodyToMono(Void.class)
+                .transformDeferred(RetryOperator.of(userServiceRetry))
+                .transformDeferred(CircuitBreakerOperator.of(userServiceCircuitBreaker))
+                .transformDeferred(TimeLimiterOperator.of(userServiceTimeLimiter))
+                .doOnSuccess(result -> log.info("Successfully updated user information for ID: {}", userId))
+                .onErrorMap(throwable -> {
+                    log.error("Failed to update user with ID: {}", userId, throwable);
+                    return new IntegrationException("User Service",
+                            "Failed to update user information: " + throwable.getMessage(), throwable);
+                });
+    }
+
+    /**
+     * Deletes a user from the user service
+     *
+     * @param userId the user ID to delete
+     * @return void - the delete operation completes successfully
+     */
+    public Mono<Void> deleteUser(UUID userId) {
+        log.info("Deleting user from user service with user ID: {}", userId);
+
+        return secureWebClient.delete()
+                .uri(userServiceApiUrl + "/{id}", userId)
+                .retrieve()
+                .bodyToMono(Void.class)
+                .transformDeferred(RetryOperator.of(userServiceRetry))
+                .transformDeferred(CircuitBreakerOperator.of(userServiceCircuitBreaker))
+                .transformDeferred(TimeLimiterOperator.of(userServiceTimeLimiter))
+                .doOnSuccess(result -> log.info("Successfully deleted user from user service with user ID: {}", userId))
+                .onErrorMap(throwable -> {
+                    log.error("Failed to delete user from user service with user ID: {}", userId, throwable);
+                    return new IntegrationException("User Service",
+                            "Failed to delete user: " + throwable.getMessage(), throwable);
+                });
+    }
+
     // Fallback methods
     public CompletableFuture<UserDto> getUserFallback(UUID userId, Exception ex) {
         log.warn("User service fallback triggered for getUserById: {}, error: {}", userId, ex.getMessage());
@@ -134,5 +222,20 @@ public class UserServiceIntegration {
             log.error("Error validating user synchronously: {}", e.getMessage());
             return false;
         }
+    }
+
+    /**
+     * Exception class for User Service integration failures
+     */
+    public static class IntegrationException extends RuntimeException {
+        public IntegrationException(String service, String message, Throwable cause) {
+            super(service + ": " + message, cause);
+        }
+    }
+
+    /**
+     * Response model for user service
+     */
+    private record ResponseModel<T>(T data) {
     }
 }

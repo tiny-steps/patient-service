@@ -156,6 +156,17 @@ public class PatientController {
         return ResponseEntity.ok(ResponseModel.success(updatedPatient, "Personal information updated successfully"));
     }
 
+    @PatchMapping("/{id}/email")
+    @PreAuthorize("hasRole('ADMIN') or @patientSecurity.isPatientOwner(authentication, #id)")
+    @CacheEvict(value = "patients", key = "#id")
+    public ResponseEntity<ResponseModel<PatientDto>> updateEmail(
+            @PathVariable UUID id,
+            @RequestParam String newEmail) {
+        PatientDto updatedPatient = patientService.updateEmail(id, newEmail);
+        return ResponseEntity
+                .ok(ResponseModel.success(updatedPatient, "Email updated successfully in both auth and user services"));
+    }
+
     @GetMapping("/{id}/age")
     @PreAuthorize("hasRole('ADMIN') or hasRole('DOCTOR') or @patientSecurity.isPatientOwner(authentication, #id)")
     public ResponseEntity<ResponseModel<Integer>> calculateAge(@PathVariable UUID id) {
