@@ -73,7 +73,7 @@ public class WebClientConfig {
      */
     private ExchangeFilterFunction logRequestHeaders() {
         return (clientRequest, next) -> {
-            logger.info("================ Outgoing Request from Doctor-Service ================");
+            logger.info("================ Outgoing Request from Patient-Service ================");
             logger.info("Request: {} {}", clientRequest.method(), clientRequest.url());
             clientRequest.headers().forEach((name, values) ->
                     values.forEach(value -> {
