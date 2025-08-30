@@ -128,3 +128,7 @@ resilience4j:
         timeoutDuration: 5s
       ts-schedule-service:
         timeoutDuration: 5s
+
+internal:
+  api:
+    secret: "902ffc52f4ab670361e543008a5f8e86005edadfbc1df36f5cc375b433448aff"
