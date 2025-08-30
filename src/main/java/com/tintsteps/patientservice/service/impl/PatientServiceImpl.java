@@ -639,7 +639,7 @@ public class PatientServiceImpl implements PatientService {
                     .email(registrationDto.getEmail())
                     .password(registrationDto.getPassword())
                     .phone(registrationDto.getPhone())
-                    .role(registrationDto.getRole())
+                    .role("PATIENT")
                     .build();
 
             UserModel userResponse = authServiceIntegration.registerUser(userRequest).block();
