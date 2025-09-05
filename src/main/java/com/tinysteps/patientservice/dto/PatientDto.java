@@ -11,6 +11,7 @@ import java.util.UUID;
 public class PatientDto {
     private UUID id;
     private UUID userId;
+    private UUID branchId;
     private Date dateOfBirth;
     private Gender gender;
     private String bloodGroup;

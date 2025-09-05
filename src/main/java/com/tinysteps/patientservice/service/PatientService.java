@@ -43,6 +43,11 @@ public interface PatientService {
 
     List<PatientDto> findAll();
 
+    // Branch Operations
+    Page<PatientDto> findByBranchId(UUID branchId, Pageable pageable);
+
+    List<PatientDto> findByBranchId(UUID branchId);
+
     // Business Operations
     PatientDto updateMedicalInfo(UUID id, Integer heightCm, BigDecimal weightKg, String bloodGroup);
 

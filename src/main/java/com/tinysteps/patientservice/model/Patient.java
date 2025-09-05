@@ -28,6 +28,9 @@ public class Patient {
     @Column(nullable = false)
     private UUID userId;
 
+    @Column(name = "branch_id")
+    private UUID branchId;
+
     private Date dateOfBirth;
 
     @Enumerated(EnumType.STRING)

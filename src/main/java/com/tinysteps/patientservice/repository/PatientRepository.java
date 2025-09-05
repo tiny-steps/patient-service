@@ -97,4 +97,14 @@ public interface PatientRepository extends JpaRepository<Patient, UUID> {
 
     @Query("SELECT p FROM Patient p WHERE p.dateOfBirth BETWEEN :startDate AND :endDate")
     Page<Patient> findByDateOfBirthRange(@Param("startDate") Date startDate, @Param("endDate") Date endDate, Pageable pageable);
+
+    // Branch-based filtering methods
+    List<Patient> findByBranchId(UUID branchId);
+    Page<Patient> findByBranchId(UUID branchId, Pageable pageable);
+    
+    List<Patient> findByBranchIdIn(List<UUID> branchIds);
+    Page<Patient> findByBranchIdIn(List<UUID> branchIds, Pageable pageable);
+    
+    long countByBranchId(UUID branchId);
+    long countByBranchIdIn(List<UUID> branchIds);
 }

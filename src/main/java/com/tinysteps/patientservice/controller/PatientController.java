@@ -5,6 +5,7 @@ import com.tinysteps.patientservice.dto.PatientRegistrationDto;
 import com.tinysteps.patientservice.model.Gender;
 import com.tinysteps.patientservice.model.ResponseModel;
 import com.tinysteps.patientservice.service.PatientService;
+import com.tinysteps.patientservice.service.SecurityService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,7 @@ import java.util.UUID;
 public class PatientController {
 
     private final PatientService patientService;
+    private final SecurityService securityService;
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('PATIENT')")
@@ -227,5 +229,26 @@ public class PatientController {
     public ResponseEntity<ResponseModel<Void>> deleteBatch(@RequestBody List<UUID> ids) {
         patientService.deleteBatch(ids);
         return ResponseEntity.ok(ResponseModel.success("Batch patients deleted successfully"));
+    }
+
+    // Branch-specific endpoints
+    @GetMapping("/branch/{branchId}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('DOCTOR')")
+    public ResponseEntity<ResponseModel<Page<PatientDto>>> getPatientsByBranch(
+            @PathVariable UUID branchId,
+            Pageable pageable) {
+        // Validate branch access
+        securityService.validateBranchAccess(branchId);
+        
+        Page<PatientDto> patients = patientService.findByBranchId(branchId, pageable);
+        return ResponseEntity.ok(ResponseModel.success(patients, "Patients retrieved for branch successfully"));
+    }
+
+    @GetMapping("/my-branch")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('DOCTOR') or hasRole('PATIENT')")
+    public ResponseEntity<ResponseModel<Page<PatientDto>>> getPatientsForMyBranch(Pageable pageable) {
+        UUID primaryBranchId = securityService.getPrimaryBranchId();
+        Page<PatientDto> patients = patientService.findByBranchId(primaryBranchId, pageable);
+        return ResponseEntity.ok(ResponseModel.success(patients, "Patients retrieved for your branch successfully"));
     }
 }

@@ -15,6 +15,7 @@ import com.tinysteps.patientservice.model.Gender;
 import com.tinysteps.patientservice.model.Patient;
 import com.tinysteps.patientservice.repository.PatientRepository;
 import com.tinysteps.patientservice.service.PatientService;
+import com.tinysteps.patientservice.service.SecurityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -44,6 +45,7 @@ public class PatientServiceImpl implements PatientService {
     private final PatientMapper patientMapper = PatientMapper.INSTANCE;
     private final AuthServiceIntegration authServiceIntegration;
     private final UserIntegrationService userServiceIntegration;
+    private final SecurityService securityService;
 
     @Override
     @Transactional
@@ -61,6 +63,12 @@ public class PatientServiceImpl implements PatientService {
             }
 
             Patient patient = patientMapper.patientDtoToPatient(patientDto);
+            
+            // Set branch ID if not provided
+            if (patient.getBranchId() == null) {
+                patient.setBranchId(securityService.getPrimaryBranchId());
+            }
+            
             Patient savedPatient = patientRepository.save(patient);
 
             log.info("Patient created successfully with ID: {}", savedPatient.getId());
@@ -100,7 +108,17 @@ public class PatientServiceImpl implements PatientService {
     public Page<PatientDto> findAll(Pageable pageable) {
         log.info("Finding all patients with pagination: {}", pageable);
 
-        Page<Patient> patients = patientRepository.findAll(pageable);
+        Page<Patient> patients;
+        
+        // Check if user is admin - if so, return all patients
+        if (securityService.getCurrentUserRoles().contains("ADMIN")) {
+            patients = patientRepository.findAll(pageable);
+        } else {
+            // Filter by user's accessible branches
+            List<UUID> branchIds = securityService.getBranchIds();
+            patients = patientRepository.findByBranchIdIn(branchIds, pageable);
+        }
+        
         return patients.map(patientMapper::patientToPatientDto);
     }
 
@@ -294,7 +312,20 @@ public class PatientServiceImpl implements PatientService {
 
     @Override
     public List<PatientDto> findAll() {
-        return patientRepository.findAll().stream()
+        log.info("Finding all patients");
+        
+        List<Patient> patients;
+        
+        // Check if user is admin - if so, return all patients
+        if (securityService.getCurrentUserRoles().contains("ADMIN")) {
+            patients = patientRepository.findAll();
+        } else {
+            // Filter by user's accessible branches
+            List<UUID> branchIds = securityService.getBranchIds();
+            patients = patientRepository.findByBranchIdIn(branchIds);
+        }
+        
+        return patients.stream()
                 .map(patientMapper::patientToPatientDto)
                 .collect(Collectors.toList());
     }
@@ -670,5 +701,31 @@ public class PatientServiceImpl implements PatientService {
             log.error("Error registering patient: {}", e.getMessage(), e);
             throw new PatientServiceException("Failed to register patient", e);
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PatientDto> findByBranchId(UUID branchId, Pageable pageable) {
+        log.info("Finding patients by branch ID: {} with pagination", branchId);
+        
+        // Validate branch access
+        securityService.validateBranchAccess(branchId);
+        
+        Page<Patient> patients = patientRepository.findByBranchId(branchId, pageable);
+        return patients.map(patientMapper::patientToPatientDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PatientDto> findByBranchId(UUID branchId) {
+        log.info("Finding patients by branch ID: {}", branchId);
+        
+        // Validate branch access
+        securityService.validateBranchAccess(branchId);
+        
+        List<Patient> patients = patientRepository.findByBranchId(branchId);
+        return patients.stream()
+                .map(patientMapper::patientToPatientDto)
+                .collect(Collectors.toList());
     }
 }
