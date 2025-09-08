@@ -38,7 +38,8 @@ public class SecurityService {
     public List<String> getCurrentUserRoles() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
-            return jwt.getClaimAsStringList("roles");
+            List<String> roles = jwt.getClaimAsStringList("roles");
+            return roles != null ? roles : List.of(); // Return empty list instead of null
         }
         throw new SecurityException("Unable to extract user roles from token");
     }
