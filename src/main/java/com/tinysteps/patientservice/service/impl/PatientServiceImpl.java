@@ -63,12 +63,12 @@ public class PatientServiceImpl implements PatientService {
             }
 
             Patient patient = patientMapper.patientDtoToPatient(patientDto);
-            
+
             // Set branch ID if not provided
             if (patient.getBranchId() == null) {
                 patient.setBranchId(securityService.getPrimaryBranchId());
             }
-            
+
             Patient savedPatient = patientRepository.save(patient);
 
             log.info("Patient created successfully with ID: {}", savedPatient.getId());
@@ -109,7 +109,7 @@ public class PatientServiceImpl implements PatientService {
         log.info("Finding all patients with pagination: {}", pageable);
 
         Page<Patient> patients;
-        
+
         // Check if user is admin - if so, return all patients
         if (securityService.getCurrentUserRoles().contains("ADMIN")) {
             patients = patientRepository.findAll(pageable);
@@ -118,7 +118,7 @@ public class PatientServiceImpl implements PatientService {
             List<UUID> branchIds = securityService.getBranchIds();
             patients = patientRepository.findByBranchIdIn(branchIds, pageable);
         }
-        
+
         return patients.map(patientMapper::patientToPatientDto);
     }
 
@@ -179,7 +179,6 @@ public class PatientServiceImpl implements PatientService {
                     boolean nameChanged = !originalName.equals(patientDto.getName());
                     boolean emailChaned = !originalEmail.equals(patientDto.getEmail());
                     boolean phoneChanged = !originalPhone.equals(patientDto.getPhone());
-
 
                     // For email and phone, we need to get them from the request or user service
                     // Since Doctor entity doesn't store email/phone, we'll update user service with
@@ -313,9 +312,9 @@ public class PatientServiceImpl implements PatientService {
     @Override
     public List<PatientDto> findAll() {
         log.info("Finding all patients");
-        
+
         List<Patient> patients;
-        
+
         // Check if user is admin - if so, return all patients
         if (securityService.getCurrentUserRoles().contains("ADMIN")) {
             patients = patientRepository.findAll();
@@ -324,7 +323,7 @@ public class PatientServiceImpl implements PatientService {
             List<UUID> branchIds = securityService.getBranchIds();
             patients = patientRepository.findByBranchIdIn(branchIds);
         }
-        
+
         return patients.stream()
                 .map(patientMapper::patientToPatientDto)
                 .collect(Collectors.toList());
@@ -692,6 +691,12 @@ public class PatientServiceImpl implements PatientService {
             patientDto.setWeightKg(registrationDto.getWeightKg());
 
             Patient patient = patientMapper.patientDtoToPatient(patientDto);
+
+            // Set branch ID if not provided
+            if (patient.getBranchId() == null) {
+                patient.setBranchId(securityService.getPrimaryBranchId());
+            }
+
             Patient savedPatient = patientRepository.save(patient);
 
             log.info("Patient registered and created successfully with ID: {}", savedPatient.getId());
@@ -707,11 +712,13 @@ public class PatientServiceImpl implements PatientService {
     @Transactional(readOnly = true)
     public Page<PatientDto> findByBranchId(UUID branchId, Pageable pageable) {
         log.info("Finding patients by branch ID: {} with pagination", branchId);
-        
+
         // Validate branch access
         securityService.validateBranchAccess(branchId);
-        
-        Page<Patient> patients = patientRepository.findByBranchId(branchId, pageable);
+
+        // Find patients for this branch OR patients with NULL branchId (legacy
+        // patients)
+        Page<Patient> patients = patientRepository.findByBranchIdOrBranchIdIsNull(branchId, pageable);
         return patients.map(patientMapper::patientToPatientDto);
     }
 
@@ -719,11 +726,13 @@ public class PatientServiceImpl implements PatientService {
     @Transactional(readOnly = true)
     public List<PatientDto> findByBranchId(UUID branchId) {
         log.info("Finding patients by branch ID: {}", branchId);
-        
+
         // Validate branch access
         securityService.validateBranchAccess(branchId);
-        
-        List<Patient> patients = patientRepository.findByBranchId(branchId);
+
+        // Find patients for this branch OR patients with NULL branchId (legacy
+        // patients)
+        List<Patient> patients = patientRepository.findByBranchIdOrBranchIdIsNull(branchId);
         return patients.stream()
                 .map(patientMapper::patientToPatientDto)
                 .collect(Collectors.toList());

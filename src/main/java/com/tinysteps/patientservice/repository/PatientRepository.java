@@ -22,10 +22,12 @@ public interface PatientRepository extends JpaRepository<Patient, UUID> {
 
     // Find by gender
     List<Patient> findByGender(Gender gender);
+
     Page<Patient> findByGender(Gender gender, Pageable pageable);
 
     // Find by blood group
     List<Patient> findByBloodGroup(String bloodGroup);
+
     Page<Patient> findByBloodGroup(String bloodGroup, Pageable pageable);
 
     // Find by age range (calculated from date of birth)
@@ -37,14 +39,17 @@ public interface PatientRepository extends JpaRepository<Patient, UUID> {
 
     // Find by height range
     List<Patient> findByHeightCmBetween(Integer minHeight, Integer maxHeight);
+
     Page<Patient> findByHeightCmBetween(Integer minHeight, Integer maxHeight, Pageable pageable);
 
     // Find by weight range
     List<Patient> findByWeightKgBetween(BigDecimal minWeight, BigDecimal maxWeight);
+
     Page<Patient> findByWeightKgBetween(BigDecimal minWeight, BigDecimal maxWeight, Pageable pageable);
 
     // Find by date of birth range
     List<Patient> findByDateOfBirthBetween(Date startDate, Date endDate);
+
     Page<Patient> findByDateOfBirthBetween(Date startDate, Date endDate, Pageable pageable);
 
     // Validation methods
@@ -52,6 +57,7 @@ public interface PatientRepository extends JpaRepository<Patient, UUID> {
 
     // Count methods
     long countByGender(Gender gender);
+
     long countByBloodGroup(String bloodGroup);
 
     @Query("SELECT COUNT(p) FROM Patient p WHERE YEAR(CURRENT_DATE) - YEAR(p.dateOfBirth) BETWEEN :minAge AND :maxAge")
@@ -80,31 +86,44 @@ public interface PatientRepository extends JpaRepository<Patient, UUID> {
     // Additional search methods
     @Query("SELECT p FROM Patient p WHERE (YEAR(CURRENT_DATE) - YEAR(p.dateOfBirth)) BETWEEN :minAge AND :maxAge")
     Page<Patient> findByAgeRange(@Param("minAge") Integer minAge, @Param("maxAge") Integer maxAge, Pageable pageable);
+
     @Query("SELECT p FROM Patient p WHERE p.heightCm BETWEEN :minHeight AND :maxHeight")
     List<Patient> findByHeightRange(@Param("minHeight") Integer minHeight, @Param("maxHeight") Integer maxHeight);
 
     @Query("SELECT p FROM Patient p WHERE p.heightCm BETWEEN :minHeight AND :maxHeight")
-    Page<Patient> findByHeightRange(@Param("minHeight") Integer minHeight, @Param("maxHeight") Integer maxHeight, Pageable pageable);
+    Page<Patient> findByHeightRange(@Param("minHeight") Integer minHeight, @Param("maxHeight") Integer maxHeight,
+            Pageable pageable);
 
     @Query("SELECT p FROM Patient p WHERE p.weightKg BETWEEN :minWeight AND :maxWeight")
     List<Patient> findByWeightRange(@Param("minWeight") BigDecimal minWeight, @Param("maxWeight") BigDecimal maxWeight);
 
     @Query("SELECT p FROM Patient p WHERE p.weightKg BETWEEN :minWeight AND :maxWeight")
-    Page<Patient> findByWeightRange(@Param("minWeight") BigDecimal minWeight, @Param("maxWeight") BigDecimal maxWeight, Pageable pageable);
+    Page<Patient> findByWeightRange(@Param("minWeight") BigDecimal minWeight, @Param("maxWeight") BigDecimal maxWeight,
+            Pageable pageable);
 
     @Query("SELECT p FROM Patient p WHERE p.dateOfBirth BETWEEN :startDate AND :endDate")
     List<Patient> findByDateOfBirthRange(@Param("startDate") Date startDate, @Param("endDate") Date endDate);
 
     @Query("SELECT p FROM Patient p WHERE p.dateOfBirth BETWEEN :startDate AND :endDate")
-    Page<Patient> findByDateOfBirthRange(@Param("startDate") Date startDate, @Param("endDate") Date endDate, Pageable pageable);
+    Page<Patient> findByDateOfBirthRange(@Param("startDate") Date startDate, @Param("endDate") Date endDate,
+            Pageable pageable);
 
     // Branch-based filtering methods
     List<Patient> findByBranchId(UUID branchId);
+
     Page<Patient> findByBranchId(UUID branchId, Pageable pageable);
-    
+
+    // Include patients with NULL branchId (legacy patients) in branch-specific
+    // queries
+    List<Patient> findByBranchIdOrBranchIdIsNull(UUID branchId);
+
+    Page<Patient> findByBranchIdOrBranchIdIsNull(UUID branchId, Pageable pageable);
+
     List<Patient> findByBranchIdIn(List<UUID> branchIds);
+
     Page<Patient> findByBranchIdIn(List<UUID> branchIds, Pageable pageable);
-    
+
     long countByBranchId(UUID branchId);
+
     long countByBranchIdIn(List<UUID> branchIds);
 }
