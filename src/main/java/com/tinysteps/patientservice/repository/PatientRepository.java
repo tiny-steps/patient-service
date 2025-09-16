@@ -1,5 +1,6 @@
 package com.tinysteps.patientservice.repository;
 
+import com.tinysteps.patientservice.model.EntityStatus;
 import com.tinysteps.patientservice.model.Gender;
 import com.tinysteps.patientservice.model.Patient;
 import org.springframework.data.domain.Page;
@@ -126,4 +127,33 @@ public interface PatientRepository extends JpaRepository<Patient, UUID> {
     long countByBranchId(UUID branchId);
 
     long countByBranchIdIn(List<UUID> branchIds);
+
+    // Soft delete methods - find only active entities
+    @Query("SELECT p FROM Patient p WHERE p.status = :status")
+    List<Patient> findByStatus(@Param("status") EntityStatus status);
+
+    @Query("SELECT p FROM Patient p WHERE p.status = :status")
+    Page<Patient> findByStatus(@Param("status") EntityStatus status, Pageable pageable);
+
+    @Query("SELECT p FROM Patient p WHERE p.userId = :userId AND p.status = :status")
+    Optional<Patient> findByUserIdAndStatus(@Param("userId") UUID userId, @Param("status") EntityStatus status);
+
+    @Query("SELECT p FROM Patient p WHERE p.branchId = :branchId AND p.status = :status")
+    List<Patient> findByBranchIdAndStatus(@Param("branchId") UUID branchId, @Param("status") EntityStatus status);
+
+    @Query("SELECT p FROM Patient p WHERE p.branchId = :branchId AND p.status = :status")
+    Page<Patient> findByBranchIdAndStatus(@Param("branchId") UUID branchId, @Param("status") EntityStatus status, Pageable pageable);
+
+    @Query("SELECT p FROM Patient p WHERE p.branchId IN :branchIds AND p.status = :status")
+    List<Patient> findByBranchIdInAndStatus(@Param("branchIds") List<UUID> branchIds, @Param("status") EntityStatus status);
+
+    @Query("SELECT p FROM Patient p WHERE p.branchId IN :branchIds AND p.status = :status")
+    Page<Patient> findByBranchIdInAndStatus(@Param("branchIds") List<UUID> branchIds, @Param("status") EntityStatus status, Pageable pageable);
+
+    // Count methods with status
+    @Query("SELECT COUNT(p) FROM Patient p WHERE p.branchId = :branchId AND p.status = :status")
+    long countByBranchIdAndStatus(@Param("branchId") UUID branchId, @Param("status") EntityStatus status);
+
+    @Query("SELECT COUNT(p) FROM Patient p WHERE p.branchId IN :branchIds AND p.status = :status")
+    long countByBranchIdInAndStatus(@Param("branchIds") List<UUID> branchIds, @Param("status") EntityStatus status);
 }

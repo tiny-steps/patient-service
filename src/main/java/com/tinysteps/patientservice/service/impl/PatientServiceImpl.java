@@ -11,6 +11,7 @@ import com.tinysteps.patientservice.integration.model.UserUpdateRequest;
 import com.tinysteps.patientservice.integration.service.AuthServiceIntegration;
 import com.tinysteps.patientservice.integration.service.UserIntegrationService;
 import com.tinysteps.patientservice.mapper.PatientMapper;
+import com.tinysteps.patientservice.model.EntityStatus;
 import com.tinysteps.patientservice.model.Gender;
 import com.tinysteps.patientservice.model.Patient;
 import com.tinysteps.patientservice.repository.PatientRepository;
@@ -736,5 +737,112 @@ public class PatientServiceImpl implements PatientService {
         return patients.stream()
                 .map(patientMapper::patientToPatientDto)
                 .collect(Collectors.toList());
+    }
+
+    // Soft delete operations
+    @Override
+    @Transactional
+    @CacheEvict(value = "patients", key = "#id")
+    public PatientDto softDelete(UUID id) {
+        try {
+            log.info("Soft deleting patient with ID: {}", id);
+            Patient patient = patientRepository.findById(id)
+                    .orElseThrow(() -> new PatientNotFoundException("Patient not found with ID: " + id));
+            
+            // Store original status for audit
+            String originalStatus = patient.getStatus() != null ? patient.getStatus().name() : null;
+            
+            patient.setStatus(EntityStatus.DELETED);
+            Patient savedPatient = patientRepository.save(patient);
+            
+            log.info("Patient {} soft deleted successfully. Original status: {}", id, originalStatus);
+            return patientMapper.patientToPatientDto(savedPatient);
+        } catch (PatientNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error soft deleting patient with ID: {}", id, e);
+            throw new PatientServiceException("Failed to soft delete patient: " + id, e);
+        }
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = "patients", key = "#id")
+    public PatientDto reactivate(UUID id) {
+        try {
+            log.info("Reactivating patient with ID: {}", id);
+            Patient patient = patientRepository.findById(id)
+                    .orElseThrow(() -> new PatientNotFoundException("Patient not found with ID: " + id));
+            
+            // Store original status for audit
+            String originalStatus = patient.getStatus() != null ? patient.getStatus().name() : null;
+            
+            patient.setStatus(EntityStatus.ACTIVE);
+            Patient savedPatient = patientRepository.save(patient);
+            
+            log.info("Patient {} reactivated successfully. Original status: {}", id, originalStatus);
+            return patientMapper.patientToPatientDto(savedPatient);
+        } catch (PatientNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error reactivating patient with ID: {}", id, e);
+            throw new PatientServiceException("Failed to reactivate patient: " + id, e);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PatientDto> findActivePatients() {
+        try {
+            log.debug("Finding all active patients");
+            List<Patient> patients = patientRepository.findByStatus(EntityStatus.ACTIVE);
+            return patients.stream()
+                    .map(patientMapper::patientToPatientDto)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Error finding active patients", e);
+            throw new PatientServiceException("Failed to find active patients", e);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PatientDto> findActivePatients(Pageable pageable) {
+        try {
+            log.debug("Finding active patients with pagination: {}", pageable);
+            Page<Patient> patients = patientRepository.findByStatus(EntityStatus.ACTIVE, pageable);
+            return patients.map(patientMapper::patientToPatientDto);
+        } catch (Exception e) {
+            log.error("Error finding active patients with pagination", e);
+            throw new PatientServiceException("Failed to find active patients", e);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PatientDto> findDeletedPatients() {
+        try {
+            log.debug("Finding all deleted patients");
+            List<Patient> patients = patientRepository.findByStatus(EntityStatus.DELETED);
+            return patients.stream()
+                    .map(patientMapper::patientToPatientDto)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Error finding deleted patients", e);
+            throw new PatientServiceException("Failed to find deleted patients", e);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PatientDto> findDeletedPatients(Pageable pageable) {
+        try {
+            log.debug("Finding deleted patients with pagination: {}", pageable);
+            Page<Patient> patients = patientRepository.findByStatus(EntityStatus.DELETED, pageable);
+            return patients.map(patientMapper::patientToPatientDto);
+        } catch (Exception e) {
+            log.error("Error finding deleted patients with pagination", e);
+            throw new PatientServiceException("Failed to find deleted patients", e);
+        }
     }
 }

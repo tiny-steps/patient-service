@@ -94,4 +94,17 @@ public interface PatientService {
     Page<PatientDto> findByAgeRange(Integer minAge, Integer maxAge, Pageable pageable);
 
     PatientDto registerPatient(PatientRegistrationDto registrationDto);
+
+    // Soft delete operations
+    PatientDto softDelete(UUID id);
+
+    PatientDto reactivate(UUID id);
+
+    List<PatientDto> findActivePatients();
+
+    Page<PatientDto> findActivePatients(Pageable pageable);
+
+    List<PatientDto> findDeletedPatients();
+
+    Page<PatientDto> findDeletedPatients(Pageable pageable);
 }

@@ -1,5 +1,6 @@
 package com.tinysteps.patientservice.dto;
 
+import com.tinysteps.patientservice.model.EntityStatus;
 import com.tinysteps.patientservice.model.Gender;
 import lombok.Data;
 
@@ -20,4 +21,5 @@ public class PatientDto {
     private String name;
     private String email;
     private String phone;
+    private EntityStatus status;
 }

@@ -42,6 +42,10 @@ public class Patient {
 
     private BigDecimal weightKg;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EntityStatus status = EntityStatus.ACTIVE;
+
     @CreationTimestamp
     private Instant createdAt;
 

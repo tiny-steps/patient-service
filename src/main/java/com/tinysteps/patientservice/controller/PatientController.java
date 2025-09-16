@@ -104,7 +104,38 @@ public class PatientController {
     @CacheEvict(value = "patients", key = "#id")
     public ResponseEntity<ResponseModel<Void>> deletePatient(@PathVariable UUID id) {
         patientService.delete(id);
-        return ResponseEntity.ok(ResponseModel.success("Patient deleted successfully"));
+        return ResponseEntity.ok(ResponseModel.success(null, "Patient deleted successfully"));
+    }
+
+    // Soft delete endpoints
+    @PatchMapping("/{id}/soft-delete")
+    @PreAuthorize("hasRole('ADMIN')")
+    @CacheEvict(value = "patients", key = "#id")
+    public ResponseEntity<ResponseModel<PatientDto>> softDeletePatient(@PathVariable UUID id) {
+        PatientDto deletedPatient = patientService.softDelete(id);
+        return ResponseEntity.ok(ResponseModel.success(deletedPatient, "Patient soft deleted successfully"));
+    }
+
+    @PatchMapping("/{id}/reactivate")
+    @PreAuthorize("hasRole('ADMIN')")
+    @CacheEvict(value = "patients", key = "#id")
+    public ResponseEntity<ResponseModel<PatientDto>> reactivatePatient(@PathVariable UUID id) {
+        PatientDto reactivatedPatient = patientService.reactivate(id);
+        return ResponseEntity.ok(ResponseModel.success(reactivatedPatient, "Patient reactivated successfully"));
+    }
+
+    @GetMapping("/active")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('DOCTOR')")
+    public ResponseEntity<ResponseModel<Page<PatientDto>>> getActivePatients(Pageable pageable) {
+        Page<PatientDto> activePatients = patientService.findActivePatients(pageable);
+        return ResponseEntity.ok(ResponseModel.success(activePatients, "Active patients retrieved successfully"));
+    }
+
+    @GetMapping("/deleted")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ResponseModel<Page<PatientDto>>> getDeletedPatients(Pageable pageable) {
+        Page<PatientDto> deletedPatients = patientService.findDeletedPatients(pageable);
+        return ResponseEntity.ok(ResponseModel.success(deletedPatients, "Deleted patients retrieved successfully"));
     }
 
     @GetMapping("/search/gender/{gender}")
