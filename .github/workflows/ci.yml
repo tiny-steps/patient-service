@@ -66,7 +66,7 @@ jobs:
           cd k8s
           
           # Use kustomize to set the new image tag dynamically
-          kustomize edit set image subhankarm2312/ts-patient-service:${IMAGE_TAG}
+          kustomize edit set image tinystepsd3v/ts-patient-service:${IMAGE_TAG}
           
           # Apply all the manifests in the k8s directory
           kubectl apply -k .
