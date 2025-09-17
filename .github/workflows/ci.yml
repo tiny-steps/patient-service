@@ -25,9 +25,30 @@ jobs:
           distribution: "temurin"
           cache: "maven"
 
+      - name: Debug repository structure
+        run: |
+          echo "Current directory:"
+          pwd
+          echo "Repository structure:"
+          find . -name "common" -type d
+          echo "Looking for pom.xml files:"
+          find . -name "pom.xml" | head -10
+          
       - name: Build and install common module
         run: |
-          cd server/common
+          # Try to find the common directory
+          if [ -d "server/common" ]; then
+            echo "Found server/common directory"
+            cd server/common
+          elif [ -d "common" ]; then
+            echo "Found common directory at root"
+            cd common
+          else
+            echo "ERROR: Cannot find common directory"
+            echo "Available directories:"
+            ls -la
+            exit 1
+          fi
           mvn clean install -DskipTests
 
       - name: Login to Docker Hub
