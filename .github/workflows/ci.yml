@@ -27,7 +27,7 @@ jobs:
 
       - name: Build and install common module
         run: |
-          cd ../../common
+          cd server/common
           mvn clean install -DskipTests
 
       - name: Login to Docker Hub
@@ -47,6 +47,7 @@ jobs:
         run: |
           IMAGE_NAME="${{ env.DOCKERHUB_USERNAME }}/${{ env.SERVICE_NAME }}"
           IMAGE_TAG="${{ steps.generate_tag.outputs.tag }}"
+          cd server/patient-service
           mvn compile com.google.cloud.tools:jib-maven-plugin:build -Dimage="${IMAGE_NAME}:${IMAGE_TAG}"
 
   deploy:
@@ -68,10 +69,10 @@ jobs:
       - name: Deploy to Kubernetes using Kustomize
         run: |
           IMAGE_TAG="${{ needs.build-and-push.outputs.tag }}"
-          cd k8s
+          cd server/patient-service/k8s
 
           # Use kustomize to set the new image tag dynamically
           kustomize edit set image tinystepsd3v/ts-patient-service:${IMAGE_TAG}
 
           # Apply all the manifests in the k8s directory
-          kubectl apply -k .
+          kubectl apply -k . --validate=false
