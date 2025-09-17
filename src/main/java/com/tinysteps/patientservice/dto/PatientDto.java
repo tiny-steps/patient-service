@@ -1,6 +1,6 @@
 package com.tinysteps.patientservice.dto;
 
-import com.tinysteps.patientservice.model.EntityStatus;
+import com.tinysteps.common.entity.EntityStatus;
 import com.tinysteps.patientservice.model.Gender;
 import lombok.Data;
 

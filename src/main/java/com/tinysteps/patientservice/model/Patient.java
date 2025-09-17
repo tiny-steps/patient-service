@@ -1,15 +1,13 @@
 package com.tinysteps.patientservice.model;
 
+import com.tinysteps.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
 
@@ -19,11 +17,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Patient {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+public class Patient extends BaseEntity {
 
     @Column(nullable = false)
     private UUID userId;
@@ -41,14 +35,4 @@ public class Patient {
     private Integer heightCm;
 
     private BigDecimal weightKg;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private EntityStatus status = EntityStatus.ACTIVE;
-
-    @CreationTimestamp
-    private Instant createdAt;
-
-    @UpdateTimestamp
-    private Instant updatedAt;
 }

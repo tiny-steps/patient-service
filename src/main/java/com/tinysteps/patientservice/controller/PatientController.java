@@ -108,6 +108,22 @@ public class PatientController {
     }
 
     // Soft delete endpoints
+    @PostMapping("/{id}/activate")
+    @PreAuthorize("hasRole('ADMIN')")
+    @CacheEvict(value = "patients", key = "#id")
+    public ResponseEntity<ResponseModel<PatientDto>> activatePatient(@PathVariable UUID id) {
+        PatientDto activatedPatient = patientService.activate(id);
+        return ResponseEntity.ok(ResponseModel.success(activatedPatient, "Patient activated successfully"));
+    }
+
+    @PostMapping("/{id}/deactivate")
+    @PreAuthorize("hasRole('ADMIN')")
+    @CacheEvict(value = "patients", key = "#id")
+    public ResponseEntity<ResponseModel<PatientDto>> deactivatePatient(@PathVariable UUID id) {
+        PatientDto deactivatedPatient = patientService.deactivate(id);
+        return ResponseEntity.ok(ResponseModel.success(deactivatedPatient, "Patient deactivated successfully"));
+    }
+
     @PatchMapping("/{id}/soft-delete")
     @PreAuthorize("hasRole('ADMIN')")
     @CacheEvict(value = "patients", key = "#id")
@@ -270,7 +286,7 @@ public class PatientController {
             Pageable pageable) {
         // Validate branch access
         securityService.validateBranchAccess(branchId);
-        
+
         Page<PatientDto> patients = patientService.findByBranchId(branchId, pageable);
         return ResponseEntity.ok(ResponseModel.success(patients, "Patients retrieved for branch successfully"));
     }

@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: ts-patient-service
-          image: subhankarm2312/ts-patient-service # CORRECTED: Placeholder name now matches ci.yml
+          image: tinystepsd3v/ts-patient-service # CORRECTED: Placeholder name now matches ci.yml
           env:
             - name: JAVA_TOOL_OPTIONS
               value: "-Xms128m -Xmx256m"

@@ -96,6 +96,10 @@ public interface PatientService {
     PatientDto registerPatient(PatientRegistrationDto registrationDto);
 
     // Soft delete operations
+    PatientDto activate(UUID id);
+
+    PatientDto deactivate(UUID id);
+
     PatientDto softDelete(UUID id);
 
     PatientDto reactivate(UUID id);

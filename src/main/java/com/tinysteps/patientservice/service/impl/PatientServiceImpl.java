@@ -11,7 +11,7 @@ import com.tinysteps.patientservice.integration.model.UserUpdateRequest;
 import com.tinysteps.patientservice.integration.service.AuthServiceIntegration;
 import com.tinysteps.patientservice.integration.service.UserIntegrationService;
 import com.tinysteps.patientservice.mapper.PatientMapper;
-import com.tinysteps.patientservice.model.EntityStatus;
+import com.tinysteps.common.entity.EntityStatus;
 import com.tinysteps.patientservice.model.Gender;
 import com.tinysteps.patientservice.model.Patient;
 import com.tinysteps.patientservice.repository.PatientRepository;
@@ -743,18 +743,68 @@ public class PatientServiceImpl implements PatientService {
     @Override
     @Transactional
     @CacheEvict(value = "patients", key = "#id")
+    public PatientDto activate(UUID id) {
+        try {
+            log.info("Activating patient with ID: {}", id);
+            Patient patient = patientRepository.findById(id)
+                    .orElseThrow(() -> new PatientNotFoundException("Patient not found with ID: " + id));
+
+            // Store original status for audit
+            String originalStatus = patient.getStatus() != null ? patient.getStatus().name() : null;
+
+            patient.setStatus(EntityStatus.ACTIVE);
+            Patient savedPatient = patientRepository.save(patient);
+
+            log.info("Patient {} activated successfully. Original status: {}", id, originalStatus);
+            return patientMapper.patientToPatientDto(savedPatient);
+        } catch (PatientNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error activating patient with ID: {}", id, e);
+            throw new PatientServiceException("Failed to activate patient: " + id, e);
+        }
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = "patients", key = "#id")
+    public PatientDto deactivate(UUID id) {
+        try {
+            log.info("Deactivating patient with ID: {}", id);
+            Patient patient = patientRepository.findById(id)
+                    .orElseThrow(() -> new PatientNotFoundException("Patient not found with ID: " + id));
+
+            // Store original status for audit
+            String originalStatus = patient.getStatus() != null ? patient.getStatus().name() : null;
+
+            patient.setStatus(EntityStatus.INACTIVE);
+            Patient savedPatient = patientRepository.save(patient);
+
+            log.info("Patient {} deactivated successfully. Original status: {}", id, originalStatus);
+            return patientMapper.patientToPatientDto(savedPatient);
+        } catch (PatientNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error deactivating patient with ID: {}", id, e);
+            throw new PatientServiceException("Failed to deactivate patient: " + id, e);
+        }
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = "patients", key = "#id")
     public PatientDto softDelete(UUID id) {
         try {
             log.info("Soft deleting patient with ID: {}", id);
             Patient patient = patientRepository.findById(id)
                     .orElseThrow(() -> new PatientNotFoundException("Patient not found with ID: " + id));
-            
+
             // Store original status for audit
             String originalStatus = patient.getStatus() != null ? patient.getStatus().name() : null;
-            
+
             patient.setStatus(EntityStatus.DELETED);
             Patient savedPatient = patientRepository.save(patient);
-            
+
             log.info("Patient {} soft deleted successfully. Original status: {}", id, originalStatus);
             return patientMapper.patientToPatientDto(savedPatient);
         } catch (PatientNotFoundException e) {
@@ -773,13 +823,13 @@ public class PatientServiceImpl implements PatientService {
             log.info("Reactivating patient with ID: {}", id);
             Patient patient = patientRepository.findById(id)
                     .orElseThrow(() -> new PatientNotFoundException("Patient not found with ID: " + id));
-            
+
             // Store original status for audit
             String originalStatus = patient.getStatus() != null ? patient.getStatus().name() : null;
-            
+
             patient.setStatus(EntityStatus.ACTIVE);
             Patient savedPatient = patientRepository.save(patient);
-            
+
             log.info("Patient {} reactivated successfully. Original status: {}", id, originalStatus);
             return patientMapper.patientToPatientDto(savedPatient);
         } catch (PatientNotFoundException e) {
