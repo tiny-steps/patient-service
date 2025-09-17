@@ -12,6 +12,9 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     outputs:
       tag: ${{ steps.generate_tag.outputs.tag }}
     steps:
@@ -39,6 +42,8 @@ jobs:
           echo "tag=${SHORT_SHA}-${TIMESTAMP}" >> $GITHUB_OUTPUT
 
       - name: Build and push image with Jib
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           IMAGE_NAME="${{ env.DOCKERHUB_USERNAME }}/${{ env.SERVICE_NAME }}"
           IMAGE_TAG="${{ steps.generate_tag.outputs.tag }}"
