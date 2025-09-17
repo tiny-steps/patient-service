@@ -27,7 +27,7 @@ jobs:
 
       - name: Build and install common module
         run: |
-          cd server/common
+          cd ../../common
           mvn clean install -DskipTests
 
       - name: Login to Docker Hub
