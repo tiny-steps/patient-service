@@ -70,6 +70,7 @@ public class PatientServiceImpl implements PatientService {
                 patient.setBranchId(securityService.getPrimaryBranchId());
             }
 
+            patient.setStatus(EntityStatus.ACTIVE);
             Patient savedPatient = patientRepository.save(patient);
 
             log.info("Patient created successfully with ID: {}", savedPatient.getId());
