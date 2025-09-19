@@ -13,76 +13,64 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * 🛡️ Enhanced Security Service for Patient Service
- * 
- * Handles security context and branch access validation with defensive
- * programming.
- * Extracts user information and branch context from JWT tokens with
- * comprehensive
- * error handling and input validation.
- * 
- * Key Features:
- * - Robust JWT token validation
- * - Comprehensive input validation
- * - Detailed security logging
- * - Fail-safe error handling
+ * Enhanced SecurityService with comprehensive defensive programming patterns.
+ * Provides secure access to JWT token claims with robust validation and error handling.
  */
 @Service
 @Slf4j
 public class SecurityService {
 
     private static final Set<String> VALID_DOMAIN_TYPES = Set.of(
-            "healthcare", "ecommerce", "cab-booking", "payment", "financial");
+            "healthcare", "ecommerce", "cab-booking", "payment", "financial"
+    );
 
     /**
-     * Get the current user ID from the JWT token with enhanced validation.
-     * 
-     * @return User UUID from JWT token
-     * @throws SecurityException if authentication context is invalid or user ID
-     *                           cannot be extracted
+     * Get the currently authenticated user's ID from JWT token claims with enhanced validation.
+     * @return User ID from token claims (never null or empty)
+     * @throws SecurityException if user is not authenticated or ID claim is missing/invalid
      */
-    public UUID getCurrentUserId() {
+    public String getCurrentUserId() {
         log.debug("Retrieving current user ID from JWT token");
 
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth == null) {
                 log.warn("No authentication context found");
-                throw new SecurityException("No authentication context found");
+                throw new SecurityException("Authentication context not found");
             }
-
             if (!auth.isAuthenticated()) {
                 log.warn("User is not authenticated");
                 throw new SecurityException("User is not authenticated");
             }
-
             if (!(auth.getPrincipal() instanceof Jwt jwt)) {
                 log.warn("Authentication principal is not a JWT token");
-                throw new SecurityException("No valid JWT authentication found");
+                throw new SecurityException("Invalid authentication token type");
             }
-
-            String userIdStr = jwt.getClaimAsString("sub");
-            if (!StringUtils.hasText(userIdStr)) {
-                log.warn("User ID claim 'sub' is missing or empty in JWT token");
-                throw new SecurityException("User ID not found in JWT token");
+            String userId = jwt.getClaimAsString("id");
+            if (!StringUtils.hasText(userId)) {
+                log.warn("User ID claim is missing or empty in JWT token");
+                throw new SecurityException("User ID not found in token claims");
             }
-
-            UUID userId = UUID.fromString(userIdStr);
+            if (userId.trim().length() < 1) {
+                log.warn("User ID claim contains only whitespace");
+                throw new SecurityException("Invalid user ID format");
+            }
             log.debug("Successfully retrieved user ID: {}", userId);
-            return userId;
-
+            return userId.trim();
         } catch (IllegalArgumentException e) {
-            log.error("Invalid UUID format for user ID: {}", e.getMessage());
-            throw new SecurityException("Invalid user ID format in JWT token", e);
+            log.error("Invalid user ID format: {}", e.getMessage());
+            throw new SecurityException("Invalid user ID format", e);
+        } catch (SecurityException e) {
+            // Re-throw security exceptions as-is
+            throw e;
         } catch (Exception e) {
             log.error("Unexpected error retrieving user ID: {}", e.getMessage());
-            throw new SecurityException("Failed to retrieve user ID from JWT token", e);
+            throw new SecurityException("Failed to retrieve user ID", e);
         }
     }
 
     /**
-     * Get the current user's roles from the JWT token with enhanced validation.
-     * 
+     * Get the currently authenticated user's roles from JWT token claims with enhanced validation.
      * @return List of user roles (never null, empty list if no roles found)
      * @throws SecurityException if authentication context is invalid
      */
@@ -92,61 +80,99 @@ public class SecurityService {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth == null) {
-                log.warn("No authentication context found");
-                throw new SecurityException("No authentication context found");
-            }
-
-            if (!auth.isAuthenticated()) {
-                log.warn("User is not authenticated");
-                throw new SecurityException("User is not authenticated");
-            }
-
-            if (!(auth.getPrincipal() instanceof Jwt jwt)) {
-                log.warn("Authentication principal is not a JWT token");
-                throw new SecurityException("No valid JWT authentication found");
-            }
-
-            // Try to get roles from "roles" claim first (plural)
-            List<String> roles = jwt.getClaimAsStringList("roles");
-
-            // If no roles found, try to get from "role" claim (singular)
-            if (roles == null || roles.isEmpty()) {
-                String singleRole = jwt.getClaimAsString("role");
-                if (StringUtils.hasText(singleRole)) {
-                    roles = List.of(singleRole);
-                    log.debug("Found single role in JWT token: {}", singleRole);
-                }
-            }
-
-            if (roles == null || roles.isEmpty()) {
-                log.debug("No roles found in JWT token, returning empty list");
+                log.debug("No authentication context found, returning empty roles list");
                 return List.of();
             }
-
-            // Filter out null or empty roles
+            if (!auth.isAuthenticated()) {
+                log.debug("User is not authenticated, returning empty roles list");
+                return List.of();
+            }
+            if (!(auth.getPrincipal() instanceof Jwt jwt)) {
+                log.debug("Authentication principal is not a JWT token, returning empty roles list");
+                return List.of();
+            }
+            List<String> roles = jwt.getClaimAsStringList("role");
+            if (roles == null || roles.isEmpty()) {
+                log.debug("No roles found in JWT token");
+                return List.of();
+            }
             List<String> validRoles = roles.stream()
                     .filter(StringUtils::hasText)
+                    .map(String::trim)
                     .collect(Collectors.toList());
-
             log.debug("Successfully retrieved {} valid roles", validRoles.size());
             return validRoles;
-
         } catch (Exception e) {
             log.error("Unexpected error retrieving user roles: {}", e.getMessage());
-            throw new SecurityException("Failed to retrieve user roles from JWT token", e);
+            return List.of(); // Fail-safe: return empty list instead of throwing
         }
     }
 
     /**
-     * Get the list of context IDs for a specific domain type with enhanced
-     * validation.
-     * 
-     * @param domainType The domain type (e.g., "healthcare", "ecommerce",
-     *                   "cab-booking")
-     * @return List of context IDs for the specified domain (never null, empty list
-     *         if no contexts found)
-     * @throws IllegalArgumentException if domainType is invalid
-     * @throws SecurityException        if authentication context is invalid
+     * Check if the current user has a specific role
+     * @param role Role to check
+     * @return true if user has the role, false otherwise
+     */
+    public boolean hasRole(String role) {
+        try {
+            List<String> roles = getCurrentUserRoles();
+            return roles != null && roles.contains(role);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Check if the current user is an admin
+     * @return true if user has ADMIN role, false otherwise
+     */
+    public boolean isAdmin() { return hasRole("ADMIN"); }
+
+    /**
+     * Check if the current user can access resources for the given user ID
+     * Users can access their own resources, admins can access any resources
+     * @param targetUserId The user ID being accessed
+     * @return true if access is allowed, false otherwise
+     */
+    public boolean canAccessUserResources(String targetUserId) {
+        try {
+            String currentUserId = getCurrentUserId();
+
+            // Users can access their own resources
+            if (currentUserId.equals(targetUserId)) {
+                return true;
+            }
+
+            // Admins can access any resources
+            return isAdmin();
+
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Validate that the current user can access resources for the given user ID
+     * Throws exception if access is not allowed
+     * @param targetUserId The user ID being accessed
+     * @throws RuntimeException if access is not allowed
+     */
+    public void validateUserAccess(String targetUserId) {
+        if (!canAccessUserResources(targetUserId)) {
+            throw new RuntimeException("Access denied: You can only access your own resources");
+        }
+    }
+
+    /**
+     * Get the currently authenticated user's context IDs for a specific domain from JWT token claims
+     * @param domainType The domain type (e.g., "healthcare", "ecommerce", "cab-booking")
+     * @return List of context IDs (as UUIDs) from token claims
+     */
+    /**
+     * Get the currently authenticated user's context IDs for a specific domain from JWT token claims with enhanced validation.
+     * @param domainType The domain type (e.g., "healthcare", "ecommerce", "cab-booking")
+     * @return List of context IDs (as UUIDs) from token claims (never null, empty list if none found)
+     * @throws SecurityException if authentication context is invalid or domain type is invalid
      */
     public List<UUID> getContextIds(String domainType) {
         log.debug("Retrieving context IDs for domain type: {}", domainType);
@@ -154,309 +180,374 @@ public class SecurityService {
         // Input validation
         if (!StringUtils.hasText(domainType)) {
             log.warn("Domain type is null or empty");
-            throw new IllegalArgumentException("Domain type cannot be null or empty");
+            throw new SecurityException("Domain type cannot be null or empty");
         }
 
-        if (!VALID_DOMAIN_TYPES.contains(domainType.toLowerCase())) {
+        if (!VALID_DOMAIN_TYPES.contains(domainType.trim())) {
             log.warn("Invalid domain type provided: {}", domainType);
-            throw new IllegalArgumentException("Invalid domain type: " + domainType);
+            throw new SecurityException("Invalid domain type: " + domainType);
         }
 
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth == null) {
-                log.debug("No authentication context found, returning empty context IDs list");
-                return List.of();
+            if (auth == null || !auth.isAuthenticated()) {
+                throw new SecurityException("User is not authenticated");
             }
 
             if (!(auth.getPrincipal() instanceof Jwt jwt)) {
-                log.debug("Authentication principal is not a JWT token, returning empty context IDs list");
-                return List.of();
+                throw new SecurityException("Invalid authentication token");
             }
 
+            // Try snake_case then camelCase
             List<String> contextIdStrings = jwt.getClaimAsStringList("context_ids");
+            if (contextIdStrings == null || contextIdStrings.isEmpty()) {
+                contextIdStrings = jwt.getClaimAsStringList("contextIds");
+            }
             String tokenDomainType = jwt.getClaimAsString("domain_type");
-
+            if (!StringUtils.hasText(tokenDomainType)) {
+                tokenDomainType = jwt.getClaimAsString("domainType");
+            }
             if (contextIdStrings == null || contextIdStrings.isEmpty()) {
                 log.debug("No context IDs found in JWT token for domain: {}", domainType);
                 return List.of();
             }
-
             if (!domainType.equals(tokenDomainType)) {
-                log.debug("Domain type mismatch. Requested: {}, Token: {}", domainType, tokenDomainType);
+                log.debug("Domain type mismatch - requested: {}, token: {}", domainType, tokenDomainType);
                 return List.of();
             }
-
             List<UUID> contextIds = contextIdStrings.stream()
                     .filter(StringUtils::hasText)
-                    .map(UUID::fromString)
+                    .map(String::trim)
+                    .map(s -> {
+                        try { return UUID.fromString(s); } catch (Exception e) { log.warn("Invalid UUID in contextIds claim: {}", s); return null; }
+                    })
+                    .filter(u -> u != null)
                     .collect(Collectors.toList());
-
-            log.debug("Successfully retrieved {} context IDs for domain: {}", contextIds.size(), domainType);
+            log.debug("Retrieved {} context IDs for domain {}", contextIds.size(), domainType);
             return contextIds;
-
-        } catch (IllegalArgumentException e) {
-            log.error("Invalid UUID format in context IDs for domain {}: {}", domainType, e.getMessage());
-            throw new SecurityException("Invalid context ID format for domain: " + domainType, e);
-        } catch (Exception e) {
+        } catch (SecurityException e) { throw e; }
+        catch (Exception e) {
             log.error("Unexpected error retrieving context IDs for domain {}: {}", domainType, e.getMessage());
-            throw new SecurityException("Failed to retrieve context IDs for domain: " + domainType, e);
+            throw new SecurityException("Failed to retrieve context IDs: " + e.getMessage());
         }
     }
 
     /**
-     * Get the primary context ID for a specific domain type with enhanced
-     * validation.
-     * 
-     * @param domainType The domain type (e.g., "healthcare", "ecommerce",
-     *                   "cab-booking")
-     * @return Primary context ID for the specified domain
-     * @throws IllegalArgumentException if domainType is invalid
-     * @throws SecurityException        if authentication context is invalid or
-     *                                  primary context ID not found
+     * Get the currently authenticated user's primary context ID for a specific domain from JWT token claims with enhanced validation.
+     * @param domainType The domain type (e.g., "healthcare", "ecommerce", "cab-booking")
+     * @return Primary context ID (as UUID) from token claims, or null if not set
+     * @throws SecurityException if authentication context is invalid or domain type is invalid
      */
     public UUID getPrimaryContextId(String domainType) {
         log.debug("Retrieving primary context ID for domain type: {}", domainType);
 
         // Input validation
         if (!StringUtils.hasText(domainType)) {
-            log.warn("Domain type is null or empty");
-            throw new IllegalArgumentException("Domain type cannot be null or empty");
+            throw new SecurityException("Domain type cannot be null or empty");
         }
 
-        if (!VALID_DOMAIN_TYPES.contains(domainType.toLowerCase())) {
-            log.warn("Invalid domain type provided: {}", domainType);
-            throw new IllegalArgumentException("Invalid domain type: " + domainType);
+        if (!VALID_DOMAIN_TYPES.contains(domainType.trim())) {
+            throw new SecurityException("Invalid domain type: " + domainType);
         }
 
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth == null) {
-                log.warn("No authentication context found for primary context ID retrieval");
-                throw new SecurityException("Authentication context not found");
+            if (auth == null || !auth.isAuthenticated()) {
+                throw new SecurityException("User is not authenticated");
             }
 
             if (!(auth.getPrincipal() instanceof Jwt jwt)) {
-                log.warn("Authentication principal is not a JWT token for primary context ID retrieval");
-                throw new SecurityException("Invalid authentication token type");
+                throw new SecurityException("Invalid authentication token");
             }
 
-            String primaryContextIdStr = jwt.getClaimAsString("primary_context_id");
+            // Try snake_case then camelCase then legacy fallbacks
+            String primaryContextIdString = jwt.getClaimAsString("primary_context_id");
+            if (!StringUtils.hasText(primaryContextIdString)) {
+                primaryContextIdString = jwt.getClaimAsString("primaryContextId");
+            }
+            if (!StringUtils.hasText(primaryContextIdString)) {
+                primaryContextIdString = jwt.getClaimAsString("primary_branch_id");
+            }
+            if (!StringUtils.hasText(primaryContextIdString)) {
+                primaryContextIdString = jwt.getClaimAsString("primaryBranchId");
+            }
             String tokenDomainType = jwt.getClaimAsString("domain_type");
-
-            // Fallback to legacy claim name for backward compatibility
-            if (!StringUtils.hasText(primaryContextIdStr)) {
-                primaryContextIdStr = jwt.getClaimAsString("primary_branch_id");
-                log.debug("Using fallback primary_branch_id claim for domain: {}", domainType);
+            if (!StringUtils.hasText(tokenDomainType)) {
+                tokenDomainType = jwt.getClaimAsString("domainType");
             }
-
-            if (!StringUtils.hasText(primaryContextIdStr)) {
-                log.warn("No primary context ID found in JWT token for domain: {}", domainType);
-                throw new SecurityException("Primary context ID not found for domain: " + domainType);
+            if (!StringUtils.hasText(primaryContextIdString)) {
+                log.debug("No primary context ID found");
+                return null;
             }
-
             if (!domainType.equals(tokenDomainType)) {
-                log.warn("Domain type mismatch. Requested: {}, Token: {}", domainType, tokenDomainType);
-                throw new SecurityException("Domain type mismatch for primary context ID");
+                log.debug("Domain type mismatch - requested: {}, token: {}", domainType, tokenDomainType);
+                return null;
             }
-
-            UUID contextId = UUID.fromString(primaryContextIdStr);
-            log.debug("Successfully retrieved primary context ID {} for domain: {}", contextId, domainType);
-            return contextId;
-
-        } catch (IllegalArgumentException e) {
-            log.error("Invalid UUID format for primary context ID in domain {}: {}", domainType, e.getMessage());
-            throw new SecurityException("Invalid primary context ID format for domain: " + domainType, e);
-        } catch (SecurityException e) {
-            // Re-throw security exceptions as-is
-            throw e;
-        } catch (Exception e) {
+            try {
+                return UUID.fromString(primaryContextIdString.trim());
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid UUID format for primary context ID: {}", primaryContextIdString);
+                return null;
+            }
+        } catch (SecurityException e) { throw e; }
+        catch (Exception e) {
             log.error("Unexpected error retrieving primary context ID for domain {}: {}", domainType, e.getMessage());
-            throw new SecurityException("Failed to retrieve primary context ID for domain: " + domainType, e);
+            throw new SecurityException("Failed to retrieve primary context ID: " + e.getMessage());
         }
     }
 
     /**
-     * Get the list of branch IDs the current user has access to
-     * 
+     * Get the currently authenticated user's branch IDs from JWT token claims
      * @deprecated Use getContextIds("healthcare") instead
+     * @return List of branch IDs (as UUIDs) from token claims
      */
     @Deprecated
-    @SuppressWarnings("unchecked")
     public List<UUID> getBranchIds() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new RuntimeException("User is not authenticated");
+        }
+
+        if (authentication.getPrincipal() instanceof Jwt jwt) {
             // Try new context-based claims first
             try {
-                return getContextIds("healthcare");
-            } catch (SecurityException e) {
-                // Fall back to legacy branch claims
-                List<String> branchIdStrings = jwt.getClaimAsStringList("branch_ids");
-                if (branchIdStrings != null) {
-                    return branchIdStrings.stream()
-                            .map(UUID::fromString)
-                            .toList();
+                List<UUID> contextIds = getContextIds("healthcare");
+                if (!contextIds.isEmpty()) {
+                    return contextIds;
                 }
+            } catch (Exception e) {
+                // Fall back to legacy claims
             }
+
+            // Fall back to legacy branch claims
+            List<String> branchIdStrings = jwt.getClaimAsStringList("branchIds");
+            if (branchIdStrings == null || branchIdStrings.isEmpty()) {
+                return List.of(); // Return empty list if no branch IDs
+            }
+
+            return branchIdStrings.stream()
+                    .map(UUID::fromString)
+                    .collect(Collectors.toList());
         }
-        throw new SecurityException("Unable to extract branch IDs from token");
+
+        throw new RuntimeException("Invalid authentication token");
     }
 
     /**
-     * Get the primary branch ID for the current user
-     * 
+     * Get the currently authenticated user's primary branch ID from JWT token claims
      * @deprecated Use getPrimaryContextId("healthcare") instead
+     * @return Primary branch ID (as UUID) from token claims, or null if not set
      */
     @Deprecated
     public UUID getPrimaryBranchId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new RuntimeException("User is not authenticated");
+        }
+
+        if (authentication.getPrincipal() instanceof Jwt jwt) {
             // Try new context-based claims first
             try {
-                return getPrimaryContextId("healthcare");
-            } catch (SecurityException e) {
-                // Fall back to legacy branch claims
-                String primaryBranchIdStr = jwt.getClaimAsString("primary_branch_id");
-                if (primaryBranchIdStr != null) {
-                    return UUID.fromString(primaryBranchIdStr);
+                UUID contextId = getPrimaryContextId("healthcare");
+                if (contextId != null) {
+                    return contextId;
                 }
+            } catch (Exception e) {
+                // Fall back to legacy claims
             }
+
+            // Fall back to legacy branch claims
+            String primaryBranchIdString = jwt.getClaimAsString("primaryBranchId");
+            if (primaryBranchIdString == null || primaryBranchIdString.isEmpty()) {
+                return null; // Return null if no primary branch ID
+            }
+
+            return UUID.fromString(primaryBranchIdString);
         }
-        throw new SecurityException("Unable to extract primary branch ID from token");
+
+        throw new RuntimeException("Invalid authentication token");
     }
 
     /**
      * Check if the current user has access to a specific context in a domain
-     * 
-     * @param contextId  The context ID to check access for
-     * @param domainType The domain type (e.g., "healthcare", "ecommerce",
-     *                   "cab-booking")
+     * @param contextId The context ID to check access for (as String)
+     * @param domainType The domain type (e.g., "healthcare", "ecommerce", "cab-booking")
      * @return true if user has access, false otherwise
      */
     /**
-     * Check if the current user has access to a specific context in a domain with
-     * enhanced validation.
-     * 
-     * @param contextId  The context ID to check (must not be null)
-     * @param domainType The domain type
-     * @return true if the user has access, false otherwise (fail-safe)
+     * Check if the current user has access to a specific context in a domain with enhanced validation.
+     * @param contextId The context ID to check access for (as String)
+     * @param domainType The domain type (e.g., "healthcare", "ecommerce", "cab-booking")
+     * @return true if user has access, false otherwise (fail-safe)
      */
-    public boolean hasAccessToContext(UUID contextId, String domainType) {
-        log.debug("Checking access to context ID: {} for domain: {}", contextId, domainType);
+    public boolean hasAccessToContext(String contextId, String domainType) {
+        log.debug("Checking context access for contextId: {}, domainType: {}", contextId, domainType);
 
         // Input validation
-        if (contextId == null) {
-            log.warn("Context ID is null");
+        if (!StringUtils.hasText(contextId)) {
+            log.debug("Context ID is null or empty, denying access");
             return false;
         }
 
         if (!StringUtils.hasText(domainType)) {
-            log.warn("Domain type is null or empty");
+            log.debug("Domain type is null or empty, denying access");
             return false;
         }
 
-        if (!VALID_DOMAIN_TYPES.contains(domainType.toLowerCase())) {
-            log.warn("Invalid domain type provided: {}", domainType);
+        if (!VALID_DOMAIN_TYPES.contains(domainType.trim())) {
+            log.debug("Invalid domain type: {}, denying access", domainType);
+            return false;
+        }
+
+        try {
+            UUID contextUuid = UUID.fromString(contextId.trim());
+            boolean hasAccess = hasAccessToContext(contextUuid, domainType);
+            log.debug("Context access check result for {}: {}", contextId, hasAccess);
+            return hasAccess;
+        } catch (IllegalArgumentException e) {
+            log.debug("Invalid UUID format for context ID: {}, denying access", contextId);
+            return false;
+        } catch (Exception e) {
+            log.error("Unexpected error checking context access for {}: {}", contextId, e.getMessage());
+            return false; // Fail-safe: deny access on error
+        }
+    }
+
+    /**
+     * Check if the current user has access to a specific context in a domain with enhanced validation.
+     * @param contextId The context ID to check access for (as UUID)
+     * @param domainType The domain type (e.g., "healthcare", "ecommerce", "cab-booking")
+     * @return true if user has access, false otherwise (fail-safe)
+     */
+    public boolean hasAccessToContext(UUID contextId, String domainType) {
+        log.debug("Checking context access for contextId: {}, domainType: {}", contextId, domainType);
+
+        // Input validation
+        if (contextId == null) {
+            log.debug("Context ID is null, denying access");
+            return false;
+        }
+
+        if (!StringUtils.hasText(domainType)) {
+            log.debug("Domain type is null or empty, denying access");
+            return false;
+        }
+
+        if (!VALID_DOMAIN_TYPES.contains(domainType.trim())) {
+            log.debug("Invalid domain type: {}, denying access", domainType);
             return false;
         }
 
         try {
             List<UUID> userContextIds = getContextIds(domainType);
             boolean hasAccess = userContextIds.contains(contextId);
-            log.debug("Access check result for context {} in domain {}: {}", contextId, domainType, hasAccess);
+            log.debug("Context access check result for {}: {}", contextId, hasAccess);
             return hasAccess;
-        } catch (SecurityException e) {
-            log.warn("Failed to check context access for domain {}: {}", domainType, e.getMessage());
-            return false; // Fail-safe: deny access on security errors
         } catch (Exception e) {
-            log.error("Unexpected error checking access to context {} in domain {}: {}", contextId, domainType,
-                    e.getMessage());
-            return false; // Fail-safe: deny access on unexpected errors
+            log.error("Unexpected error checking context access for {}: {}", contextId, e.getMessage());
+            return false; // Fail-safe: deny access on error
         }
     }
 
     /**
-     * Check if the current user has access to a specific context in a domain with
-     * enhanced validation.
-     * 
-     * @param contextId  The context ID to check (must be a valid UUID string)
-     * @param domainType The domain type
-     * @return true if the user has access, false otherwise (fail-safe)
+     * Validate that the current user has access to a specific context in a domain
+     * Throws exception if access is denied
+     * @param contextId The context ID to validate access for (as String)
+     * @param domainType The domain type (e.g., "healthcare", "ecommerce", "cab-booking")
+     * @throws RuntimeException if user doesn't have access to the context
      */
-    public boolean hasAccessToContext(String contextId, String domainType) {
-        log.debug("Checking access to context ID: {} for domain: {}", contextId, domainType);
-
-        // Input validation
-        if (!StringUtils.hasText(contextId)) {
-            log.warn("Context ID is null or empty");
-            return false;
+    public void validateContextAccess(String contextId, String domainType) {
+        if (!hasAccessToContext(contextId, domainType)) {
+            throw new RuntimeException("Access denied: User does not have access to context " + contextId + " in domain " + domainType);
         }
+    }
 
-        if (!StringUtils.hasText(domainType)) {
-            log.warn("Domain type is null or empty");
-            return false;
-        }
-
-        if (!VALID_DOMAIN_TYPES.contains(domainType.toLowerCase())) {
-            log.warn("Invalid domain type provided: {}", domainType);
-            return false;
-        }
-
-        try {
-            UUID contextUuid = UUID.fromString(contextId);
-            boolean hasAccess = hasAccessToContext(contextUuid, domainType);
-            log.debug("Access check result for context {} in domain {}: {}", contextId, domainType, hasAccess);
-            return hasAccess;
-        } catch (IllegalArgumentException e) {
-            log.warn("Invalid UUID format for context ID {}: {}", contextId, e.getMessage());
-            return false;
-        } catch (Exception e) {
-            log.error("Unexpected error checking access to context {} in domain {}: {}", contextId, domainType,
-                    e.getMessage());
-            return false; // Fail-safe: deny access on unexpected errors
+    /**
+     * Validate that the current user has access to a specific context in a domain
+     * Throws exception if access is denied
+     * @param contextId The context ID to validate access for (as UUID)
+     * @param domainType The domain type (e.g., "healthcare", "ecommerce", "cab-booking")
+     * @throws RuntimeException if user doesn't have access to the context
+     */
+    public void validateContextAccess(UUID contextId, String domainType) {
+        if (!hasAccessToContext(contextId, domainType)) {
+            throw new RuntimeException("Access denied: User does not have access to context " + contextId + " in domain " + domainType);
         }
     }
 
     /**
      * Check if the current user has access to a specific branch
-     * 
      * @deprecated Use hasAccessToContext(branchId, "healthcare") instead
+     * @param branchId The branch ID to check access for
+     * @return true if user has access to the branch, false otherwise
      */
     @Deprecated
-    public boolean hasAccessToBranch(UUID branchId) {
-        if (branchId == null) {
+    public boolean hasBranchAccess(String branchId) {
+        if (!StringUtils.hasText(branchId)) { return false; }
+        try {
+            return hasBranchAccess(UUID.fromString(branchId.trim()));
+        } catch (IllegalArgumentException e) {
             return false;
         }
+    }
 
+    /**
+     * Check if the current user has access to a specific branch
+     * @deprecated Use hasAccessToContext(branchId, "healthcare") instead
+     * @param branchId The branch ID (as UUID) to check access for
+     * @return true if user has access to the branch, false otherwise
+     */
+    @Deprecated
+    public boolean hasBranchAccess(UUID branchId) {
+        if (branchId == null) { return false; }
+        boolean contextAccess = false;
+        try {
+            contextAccess = hasAccessToContext(branchId, "healthcare");
+        } catch (Exception e) {
+            log.debug("Context-based access check threw exception, attempting legacy fallback: {}", e.getMessage());
+        }
+        if (contextAccess) {
+            return true; // Short-circuit if context-based access granted
+        }
+        // Fallback to legacy branch claims even if context-based returned false
         try {
             List<UUID> userBranchIds = getBranchIds();
-            return userBranchIds.contains(branchId);
-        } catch (SecurityException e) {
-            log.warn("Failed to check branch access: {}", e.getMessage());
+            boolean legacyAccess = userBranchIds.contains(branchId);
+            log.debug("Legacy branch access check for {} => {}", branchId, legacyAccess);
+            return legacyAccess;
+        } catch (Exception e) {
+            log.debug("Legacy branch access check failed: {}", e.getMessage());
             return false;
         }
     }
 
     /**
-     * Check if the current user is an admin
+     * Validate that the current user has access to a specific branch
+     * Throws exception if access is not allowed
+     * @deprecated Use validateContextAccess(branchId, "healthcare") instead
+     * @param branchId The branch ID to validate access for
+     * @throws RuntimeException if access is not allowed
      */
-    public boolean isAdmin() {
-        try {
-            List<String> roles = getCurrentUserRoles();
-            return roles.contains("ADMIN");
-        } catch (SecurityException e) {
-            log.warn("Failed to check admin role: {}", e.getMessage());
-            return false;
+    @Deprecated
+    public void validateBranchAccess(String branchId) {
+        if (!hasBranchAccess(branchId)) {
+            throw new RuntimeException("Access denied: You do not have access to this branch");
         }
     }
 
     /**
-     * Validate that the user has access to the specified branch
-     * Throws SecurityException if access is denied
+     * Validate that the current user has access to a specific branch
+     * Throws exception if access is not allowed
+     * @deprecated Use validateContextAccess(branchId, "healthcare") instead
+     * @param branchId The branch ID (as UUID) to validate access for
+     * @throws RuntimeException if access is not allowed
      */
+    @Deprecated
     public void validateBranchAccess(UUID branchId) {
-        if (!isAdmin() && !hasAccessToBranch(branchId)) {
-            throw new SecurityException("Access denied to branch: " + branchId);
+        if (!hasBranchAccess(branchId)) {
+            throw new RuntimeException("Access denied: You do not have access to this branch");
         }
     }
 }
