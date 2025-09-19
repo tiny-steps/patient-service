@@ -508,6 +508,12 @@ public class PatientServiceImpl implements PatientService {
         try {
             List<Patient> patients = patientDtos.stream()
                     .map(patientMapper::patientDtoToPatient)
+                    .peek(patient -> {
+                        // Ensure all patients have ACTIVE status
+                        if (patient.getStatus() == null) {
+                            patient.setStatus(EntityStatus.ACTIVE);
+                        }
+                    })
                     .collect(Collectors.toList());
 
             List<Patient> savedPatients = patientRepository.saveAll(patients);
@@ -691,6 +697,8 @@ public class PatientServiceImpl implements PatientService {
             patientDto.setBloodGroup(registrationDto.getBloodGroup());
             patientDto.setHeightCm(registrationDto.getHeightCm());
             patientDto.setWeightKg(registrationDto.getWeightKg());
+            // Set default status to ACTIVE
+            patientDto.setStatus(EntityStatus.ACTIVE);
 
             Patient patient = patientMapper.patientDtoToPatient(patientDto);
 
